@@ -1,0 +1,3 @@
+```sh
+trunk serve
+```
