@@ -7,10 +7,12 @@ mod win;
 mod main_menu;
 mod moving_block;
 mod grappling_hook;
+mod client;
 
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use bevy_kira_audio::prelude::*;
+use client::MyClientPlugin;
 use death::DeathPlugin;
 use grappling_hook::GrapplePlugin;
 use main_menu::MenuPlugin;
@@ -62,6 +64,7 @@ fn main() {
         .add_plugin(WinPlugin)
         .add_plugin(MenuPlugin)
         .add_plugin(MovingBlockPlugin)
+        .add_plugin(MyClientPlugin)
         // .add_plugin(RapierDebugRenderPlugin::default())
         .run();
 }
@@ -70,3 +73,4 @@ fn main() {
 pub struct CurrentLevel {
     level_number: u8,
 }
+
