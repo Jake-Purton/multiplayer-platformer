@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 const PROTOCOL_ID: u64 = 7;
 
 #[derive(Debug, Serialize, Deserialize, Component)]
-enum ServerMessages {
+enum ServerMessage {
     PlayerConnected { id: u64 },
     PlayerDisconnected { id: u64 },
     PlayerPosition {id: u64, position: Vec3},
@@ -63,9 +63,12 @@ fn server_update_system(
             let client_message: ClientMessage = bincode::deserialize(&message).unwrap();
 
             match client_message {
-                ClientMessage::PlayerPosition(a) => println!("{}", a.x),
+                ClientMessage::PlayerPosition(vec) => {
+                    let message = ServerMessage::PlayerPosition { id: client_id, position: vec };
+                    server.broadcast_message_except(client_id, DefaultChannel::Unreliable, bincode::serialize(&message).unwrap())
+                },
             }
-
         }
     }
 }
+
