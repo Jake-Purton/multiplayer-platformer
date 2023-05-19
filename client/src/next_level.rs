@@ -31,7 +31,7 @@ fn back_to_gameplay (
     mut game_state: ResMut<NextState<GameState>>,
     mut timer: ResMut<LevelTimer>,
     time: Res<Time>,
-    entities: Query<Entity>,
+    entities: Query<Entity, Without<Window>>,
     mut commands: Commands,
     current_level: Res<CurrentLevel>,
 ) {
