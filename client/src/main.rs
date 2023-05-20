@@ -8,6 +8,7 @@ mod main_menu;
 mod moving_block;
 mod grappling_hook;
 mod client;
+mod server;
 
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;

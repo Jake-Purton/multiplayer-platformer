@@ -26,6 +26,7 @@ impl Plugin for MyClientPlugin {
             .init_resource::<ClientMessages>()
             .insert_resource(UserIdMap(HashMap::new()))
             .add_system(client_update_system.in_set(OnUpdate(GameState::Gameplay)))
+            .add_system(respawn_other_players.in_schedule(OnEnter(GameState::Gameplay)))
             .insert_resource(new_renet_client())
             .add_system(client_send_input);
 
@@ -38,7 +39,7 @@ pub struct AnotherPlayer (u64);
 #[derive(Resource)]
 pub struct UserIdMap(HashMap<u64, Vec3>);
 
-const PROTOCOL_ID: u64 = 7;
+pub const PROTOCOL_ID: u64 = 7;
 
 #[derive(Debug, Default, Serialize, Deserialize, Component, Resource)]
 pub struct ClientMessages {
@@ -51,14 +52,14 @@ pub enum ClientMessage {
 }
 
 #[derive(Debug, Serialize, Deserialize, Component)]
-enum ServerMessage {
+pub enum ServerMessage {
     PlayerConnected { id: u64 },
     PlayerDisconnected { id: u64 },
     PlayerPosition {id: u64, position: Vec3},
 }
 
 fn new_renet_client() -> RenetClient {
-    let server_addr = "127.0.0.1:5000".parse().unwrap();
+    let server_addr = "192.168.1.235:5000".parse().unwrap();
     let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
     let connection_config = RenetConnectionConfig::default();
     let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
@@ -131,4 +132,30 @@ fn client_update_system(
         };
 
     }
+}
+
+fn respawn_other_players (
+    mut commands: Commands,
+    game_textures: Res<GameTextures>,
+    players: Res<UserIdMap>
+) {
+    
+    for (player, pos) in &players.0 {
+
+        commands
+        .spawn(SpriteBundle {
+            texture: game_textures.player.clone(),
+            sprite: Sprite {
+                custom_size: Some(FELLA_SPRITE_SIZE),
+                ..Default::default()
+            },
+            transform: Transform::from_translation(*pos),
+            ..Default::default()
+        })
+        .insert(Collider::cuboid(FELLA_SPRITE_SIZE.x / 2.0, FELLA_SPRITE_SIZE.y / 2.0 ))
+        .insert(RigidBody::Fixed)
+        .insert(AnotherPlayer(*player));
+
+    }
+
 }
