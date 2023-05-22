@@ -12,6 +12,7 @@ pub struct GameTextures {
     pub exit: Handle<Image>,
     pub play: Handle<Image>,
     pub hook: Handle<Image>,
+    pub online: Handle<Image>,
 }
 
 #[derive(Component)]
@@ -44,7 +45,8 @@ fn pre_startup(
         menu: asset_server.load("death-messages/menu.png"),
         exit: asset_server.load("death-messages/exit.png"),
         play: asset_server.load("death-messages/play.png"),
-        hook: asset_server.load("images/hook.png")
+        hook: asset_server.load("images/hook.png"),
+        online: asset_server.load("death-messages/online.png")
     });
 
     let music = asset_server.load("music/new_bossa.wav");

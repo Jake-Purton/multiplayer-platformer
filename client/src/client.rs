@@ -13,8 +13,6 @@ use serde::{Serialize, Deserialize};
 // player level change
 // moving block position / being moved  
 
-// change to see if working
-
 use std::{net::UdpSocket, time::SystemTime, collections::HashMap};
 
 use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures};

@@ -16,6 +16,7 @@ impl Plugin for MenuPlugin {
 pub enum MenuAction {
     Exit,
     Start,
+    Online,
 }
 
 #[derive(Component)]
@@ -36,16 +37,6 @@ fn setup_menu (
     commands.spawn(Camera2dBundle::default());
 
     commands.spawn(SpriteBundle {
-        texture: game_textures.menu.clone(),
-        transform: Transform {
-            translation: Vec3::new(0.0, window.height() / 4.0, 20.0),
-            scale: Vec3::new(1.0, 1.0, 1.0),
-            ..Default::default()
-        },
-        ..Default::default()
-    });
-
-    commands.spawn(SpriteBundle {
         texture: game_textures.play.clone(),
         transform: Transform {
             translation: Vec3::new(0.0, 0.0, 20.0),
@@ -58,12 +49,22 @@ fn setup_menu (
     commands.spawn(SpriteBundle {
         texture: game_textures.exit.clone(),
         transform: Transform {
-            translation: Vec3::new(0.0, -(window.height() / 4.0), 20.0),
+            translation: Vec3::new(0.0, window.height() / 4.0, 20.0),
             scale: Vec3::new(1.0, 1.0, 1.0),
             ..Default::default()
         },
         ..Default::default()
     }).insert(MenuItem { size: Vec2::new(500.0, 150.0), action: MenuAction::Exit });
+
+    commands.spawn(SpriteBundle {
+        texture: game_textures.online.clone(),
+        transform: Transform {
+            translation: Vec3::new(0.0, -(window.height() / 4.0), 20.0),
+            scale: Vec3::new(1.0, 1.0, 1.0),
+            ..Default::default()
+        },
+        ..Default::default()
+    }).insert(MenuItem { size: Vec2::new(500.0, 150.0), action: MenuAction::Online });
 }
 
 pub fn menu_click_system (
@@ -87,6 +88,7 @@ pub fn menu_click_system (
                         MenuAction::Start => {
                             game_state.set(GameState::Gameplay)
                         }
+                        MenuAction::Online => /* Host or join? */,
                     }
                 }
             }
