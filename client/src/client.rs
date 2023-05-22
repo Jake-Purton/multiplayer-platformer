@@ -8,6 +8,9 @@ use bevy_renet::{
 };
 use serde::{Serialize, Deserialize};
 
+use std::net::SocketAddr;
+use local_ip_address::local_ip;
+
 // messages that need to be sent: 
 // player position
 // player level change
@@ -60,7 +63,8 @@ pub enum ServerMessage {
 
 fn new_renet_client() -> RenetClient {
     let server_addr = "192.168.1.235:5000".parse().unwrap();
-    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+    let client_addr = SocketAddr::new(local_ip().unwrap(), 5000);
+    let socket = UdpSocket::bind(client_addr).unwrap();
     let connection_config = RenetConnectionConfig::default();
     let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
     let client_id = current_time.as_millis() as u64;

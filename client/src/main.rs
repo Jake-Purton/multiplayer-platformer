@@ -65,7 +65,7 @@ fn main() {
         .add_plugin(WinPlugin)
         .add_plugin(MenuPlugin)
         .add_plugin(MovingBlockPlugin)
-        .add_plugin(MyClientPlugin)
+        // .add_plugin(MyClientPlugin)
         // .add_plugin(RapierDebugRenderPlugin::default())
         .run();
 }

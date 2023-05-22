@@ -17,6 +17,8 @@ pub enum MenuAction {
     Exit,
     Start,
     Online,
+    Host,
+    Join,
 }
 
 #[derive(Component)]
@@ -59,7 +61,7 @@ fn setup_menu (
     commands.spawn(SpriteBundle {
         texture: game_textures.online.clone(),
         transform: Transform {
-            translation: Vec3::new(0.0, -(window.height() / 4.0), 20.0),
+            translation: Vec3::new(0.0, -(window.height() / 4.0) -200.0, 20.0),
             scale: Vec3::new(1.0, 1.0, 1.0),
             ..Default::default()
         },
@@ -88,7 +90,7 @@ pub fn menu_click_system (
                         MenuAction::Start => {
                             game_state.set(GameState::Gameplay)
                         }
-                        MenuAction::Online => /* Host or join? */,
+                        MenuAction::Online => () /* Host or join? */,
                     }
                 }
             }
