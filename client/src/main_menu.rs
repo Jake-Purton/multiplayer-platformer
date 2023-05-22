@@ -1,6 +1,6 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide, app::AppExit, window::PrimaryWindow};
 
-use crate::{GameState, startup_plugin::{despawn_everything, GameTextures}};
+use crate::{GameState, startup_plugin::{despawn_everything}};
 
 pub struct MenuPlugin;
 
@@ -13,12 +13,15 @@ impl Plugin for MenuPlugin {
     }
 }
 
+const TEXT_SIZE: Vec2 = Vec2 { x: 300.0, y: 150.0 };
+
 pub enum MenuAction {
     Exit,
     Start,
     Online,
     Host,
     Join,
+    Back,
 }
 
 #[derive(Component)]
@@ -29,8 +32,8 @@ pub struct MenuItem {
 
 fn setup_menu (
     mut commands: Commands,
-    game_textures: Res<GameTextures>,
     windows: Query<&Window, With<PrimaryWindow>>,
+    asset_server: Res<AssetServer>
 ) {
 
     let window = windows.get_single().unwrap();
@@ -38,51 +41,46 @@ fn setup_menu (
     commands.insert_resource(ClearColor(Color::rgb(1.0, 0.5, 0.0)));
     commands.spawn(Camera2dBundle::default());
 
-    commands.spawn(SpriteBundle {
-        texture: game_textures.play.clone(),
-        transform: Transform {
-            translation: Vec3::new(0.0, 0.0, 20.0),
-            scale: Vec3::new(1.0, 1.0, 1.0),
+    commands.spawn((
+        TextBundle {
+            text: 
+                Text::from_section("Play",             
+                TextStyle {
+                    font_size: 100.0,
+                    color: Color::WHITE,
+                    font: asset_server.load("fonts/Rubik-SemiBold.ttf")
+                },),
+            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
             ..Default::default()
-        },
-        ..Default::default()
-    }).insert(MenuItem { size: Vec2::new(500.0, 150.0), action: MenuAction::Start });
-
-    commands.spawn(SpriteBundle {
-        texture: game_textures.exit.clone(),
-        transform: Transform {
-            translation: Vec3::new(0.0, window.height() / 4.0, 20.0),
-            scale: Vec3::new(1.0, 1.0, 1.0),
+        }        
+        .with_style(Style {
+            align_items: AlignItems::Center,
+            align_self: AlignSelf::Center,
+            align_content: AlignContent::Center,
+            justify_content: JustifyContent::Center,
             ..Default::default()
-        },
-        ..Default::default()
-    }).insert(MenuItem { size: Vec2::new(500.0, 150.0), action: MenuAction::Exit });
-
-    commands.spawn(SpriteBundle {
-        texture: game_textures.online.clone(),
-        transform: Transform {
-            translation: Vec3::new(0.0, -(window.height() / 4.0) -200.0, 20.0),
-            scale: Vec3::new(1.0, 1.0, 1.0),
-            ..Default::default()
-        },
-        ..Default::default()
-    }).insert(MenuItem { size: Vec2::new(500.0, 150.0), action: MenuAction::Online });
+        })        
+        .with_text_alignment(TextAlignment::Right),
+        MenuItem { size: TEXT_SIZE, action: MenuAction::Start },
+    ));
 }
 
 pub fn menu_click_system (
     buttons: Res<Input<MouseButton>>, 
     windows: Query<&Window, With<PrimaryWindow>>,
-    menu_item: Query<(&MenuItem, &Transform)>,
+    menu_item: Query<(Entity, &MenuItem, &Transform)>,
     mut game_state: ResMut<NextState<GameState>>,
     mut exit: EventWriter<AppExit>,
+    mut commands: Commands,
 ) {
     if buttons.just_pressed(MouseButton::Left) {
         let window = windows.get_single().unwrap();
+        let mut online_pressed = false;
 
         if let Some(position) = window.cursor_position() {
             let position = Vec3::new(position.x - window.width() / 2.0, position.y - window.height() / 2.0, 0.0);
 
-            for (item, transform) in menu_item.iter() {
+            for (_, item, transform) in menu_item.iter() {
                 if collide(position, Vec2::new(2.0, 2.0), transform.translation, item.size).is_some() {
 
                     match item.action {
@@ -90,10 +88,23 @@ pub fn menu_click_system (
                         MenuAction::Start => {
                             game_state.set(GameState::Gameplay)
                         }
-                        MenuAction::Online => () /* Host or join? */,
+                        MenuAction::Online => online_pressed = true,
+                        _ => (),
                     }
                 }
             }
+        }
+
+        if online_pressed {
+
+            for (entity, _, _) in menu_item.iter() {
+
+                commands.entity(entity).despawn();
+                println!("despawned")
+
+            }
+
+
         }
     }
 }
