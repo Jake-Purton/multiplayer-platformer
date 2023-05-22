@@ -44,25 +44,44 @@ fn setup_menu (
     commands.spawn((
         TextBundle {
             text: 
-                Text::from_section("Play",             
+                Text::from_section("Play\n",             
                 TextStyle {
                     font_size: 100.0,
                     color: Color::WHITE,
-                    font: asset_server.load("fonts/Rubik-SemiBold.ttf")
+                    font: asset_server.load("fonts/Rubik-SemiBold.ttf"),    
                 },),
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
+            style: Style { 
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                padding: UiRect {bottom: Val::Px(50.0), ..default()},
+                ..default()
+            },
+            background_color: bevy::prelude::BackgroundColor(Color::BLACK),
             ..Default::default()
-        }        
-        .with_style(Style {
-            align_items: AlignItems::Center,
-            align_self: AlignSelf::Center,
-            align_content: AlignContent::Center,
-            justify_content: JustifyContent::Center,
-            ..Default::default()
-        })        
-        .with_text_alignment(TextAlignment::Right),
+        },
         MenuItem { size: TEXT_SIZE, action: MenuAction::Start },
     ));
+    commands.spawn((
+        TextBundle {
+            text: 
+                Text::from_section("I hate text\n",             
+                TextStyle {
+                    font_size: 100.0,
+                    color: Color::WHITE,
+                    font: asset_server.load("fonts/Rubik-SemiBold.ttf"),    
+                },),
+            style: Style { 
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                padding: UiRect {bottom: Val::Px(50.0), ..default()},
+                ..default()
+            },
+            background_color: bevy::prelude::BackgroundColor(Color::BLACK),
+            ..Default::default()
+        },
+        MenuItem { size: TEXT_SIZE, action: MenuAction::Start },
+    ));
+
 }
 
 pub fn menu_click_system (
