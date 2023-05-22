@@ -11,7 +11,6 @@ mod client;
 mod server;
 
 use bevy::prelude::*;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 use bevy_kira_audio::prelude::*;
 use death::DeathPlugin;
@@ -65,7 +64,7 @@ fn main() {
         .add_plugin(WinPlugin)
         .add_plugin(MenuPlugin)
         .add_plugin(MovingBlockPlugin)
-        .add_plugin(WorldInspectorPlugin::default())
+        // .add_plugin(WorldInspectorPlugin::default())
         // .add_plugin(RapierDebugRenderPlugin::default())
         .run();
 }

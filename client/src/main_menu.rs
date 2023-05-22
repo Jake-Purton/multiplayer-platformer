@@ -1,6 +1,6 @@
-use bevy::{prelude::*, sprite::collide_aabb::collide, app::AppExit, window::PrimaryWindow};
+use bevy::{prelude::*, app::AppExit, window::PrimaryWindow};
 
-use crate::{GameState, startup_plugin::{despawn_everything}};
+use crate::{GameState, startup_plugin::despawn_everything};
 
 pub struct MenuPlugin;
 
@@ -13,73 +13,55 @@ impl Plugin for MenuPlugin {
     }
 }
 
-const TEXT_SIZE: Vec2 = Vec2 { x: 300.0, y: 150.0 };
-
-pub enum MenuAction {
-    Exit,
-    Start,
-    Online,
-    Host,
-    Join,
-    Back,
-}
+const PLAY: &str = "Play";
+const HOST: &str = "Host";
+const JOIN: &str = "Join";
+const EXIT: &str = "Exit";
 
 #[derive(Component)]
-pub struct MenuItem {
-    pub size: Vec2,
-    pub action: MenuAction,
-}
+pub struct Menu;
 
 fn setup_menu (
     mut commands: Commands,
-    windows: Query<&Window, With<PrimaryWindow>>,
     asset_server: Res<AssetServer>
 ) {
-
-    let window = windows.get_single().unwrap();
 
     commands.insert_resource(ClearColor(Color::rgb(1.0, 0.5, 0.0)));
     commands.spawn(Camera2dBundle::default());
 
     commands.spawn((
-        TextBundle {
-            text: 
-                Text::from_section("Play\n",             
+        TextBundle::from_sections([
+            TextSection::new(
+                format!("{}\n", PLAY),
                 TextStyle {
-                    font_size: 100.0,
-                    color: Color::WHITE,
-                    font: asset_server.load("fonts/Rubik-SemiBold.ttf"),    
-                },),
-            style: Style { 
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                padding: UiRect {bottom: Val::Px(50.0), ..default()},
-                ..default()
-            },
-            background_color: bevy::prelude::BackgroundColor(Color::BLACK),
-            ..Default::default()
-        },
-        MenuItem { size: TEXT_SIZE, action: MenuAction::Start },
-    ));
-    commands.spawn((
-        TextBundle {
-            text: 
-                Text::from_section("I hate text\n",             
+                    font: asset_server.load("fonts/Rubik-SemiBold.ttf"),
+                    font_size: 60.0,
+                    color: Color::BLACK,
+                },
+            ),
+            TextSection::new(
+                format!("{}\n", HOST),
                 TextStyle {
-                    font_size: 100.0,
-                    color: Color::WHITE,
-                    font: asset_server.load("fonts/Rubik-SemiBold.ttf"),    
-                },),
-            style: Style { 
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                padding: UiRect {bottom: Val::Px(50.0), ..default()},
-                ..default()
-            },
-            background_color: bevy::prelude::BackgroundColor(Color::BLACK),
-            ..Default::default()
-        },
-        MenuItem { size: TEXT_SIZE, action: MenuAction::Start },
+                font: asset_server.load("fonts/Rubik-SemiBold.ttf"),
+                font_size: 60.0,
+                color: Color::BLACK,
+            }),
+            TextSection::new(
+                format!("{}\n", JOIN),
+                TextStyle {
+                font: asset_server.load("fonts/Rubik-SemiBold.ttf"),
+                font_size: 60.0,
+                color: Color::BLACK,
+            }),
+            TextSection::new(
+                format!("{}\n", EXIT),
+                TextStyle {
+                font: asset_server.load("fonts/Rubik-SemiBold.ttf"),
+                font_size: 60.0,
+                color: Color::BLACK,
+            }),
+        ]),
+        Menu,
     ));
 
 }
@@ -87,43 +69,46 @@ fn setup_menu (
 pub fn menu_click_system (
     buttons: Res<Input<MouseButton>>, 
     windows: Query<&Window, With<PrimaryWindow>>,
-    menu_item: Query<(Entity, &MenuItem, &Transform)>,
+    mut menu_items: Query<(&mut Text, &CalculatedSize), With<Menu>>,
     mut game_state: ResMut<NextState<GameState>>,
     mut exit: EventWriter<AppExit>,
-    mut commands: Commands,
 ) {
-    if buttons.just_pressed(MouseButton::Left) {
-        let window = windows.get_single().unwrap();
-        let mut online_pressed = false;
+    let window = windows.get_single().unwrap();
+    
+    if let Some(position) = window.cursor_position() {
+        
+        for (mut items, size) in menu_items.iter_mut() {
+            
+            for (i, mut section) in items.sections.iter_mut().enumerate() {
+                
+                // to find the position of text: i * size / total_items is the highest y value. lowest is highest + 70
+                let highest = window.height() - (i as f32 * size.size.y / 4.0);
+                let lowest = highest - 70.0;
+                
+                if position.y < highest && position.y > lowest {
+                    section.style.color = Color::RED;
 
-        if let Some(position) = window.cursor_position() {
-            let position = Vec3::new(position.x - window.width() / 2.0, position.y - window.height() / 2.0, 0.0);
+                    if buttons.just_pressed(MouseButton::Left) {
 
-            for (_, item, transform) in menu_item.iter() {
-                if collide(position, Vec2::new(2.0, 2.0), transform.translation, item.size).is_some() {
+                        match section.value.trim() {
 
-                    match item.action {
-                        MenuAction::Exit => exit.send(AppExit),
-                        MenuAction::Start => {
-                            game_state.set(GameState::Gameplay)
+                            PLAY => game_state.set(GameState::Gameplay),
+                            HOST => {
+                                println!("host");
+                                game_state.set(GameState::Gameplay);
+                            },
+                            EXIT => exit.send(AppExit),
+                            JOIN => println!("Join"),
+                            _ => println!("What?
+                            "),
                         }
-                        MenuAction::Online => online_pressed = true,
-                        _ => (),
+
                     }
+
+                } else {
+                    section.style.color = Color::BLACK;
                 }
-            }
-        }
-
-        if online_pressed {
-
-            for (entity, _, _) in menu_item.iter() {
-
-                commands.entity(entity).despawn();
-                println!("despawned")
-
-            }
-
-
+            } 
         }
     }
 }
