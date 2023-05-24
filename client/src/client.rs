@@ -18,7 +18,7 @@ use local_ip_address::local_ip;
 
 use std::{net::UdpSocket, time::SystemTime, collections::HashMap};
 
-use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures, main_menu::{HostClient}, MultiplayerSetting};
+use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures, main_menu::HostClient, MultiplayerSetting};
 
 pub struct MyClientPlugin;
 
@@ -51,7 +51,7 @@ pub struct AnotherPlayer (u64);
 #[derive(Resource)]
 pub struct UserIdMap(HashMap<u64, Vec3>);
 
-pub const PROTOCOL_ID: u64 = 7;
+pub const PROTOCOL_ID: u64 = 8;
 
 #[derive(Debug, Default, Serialize, Deserialize, Component, Resource)]
 pub struct ClientMessages {
