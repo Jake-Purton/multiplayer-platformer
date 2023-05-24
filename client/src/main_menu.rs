@@ -18,6 +18,15 @@ const HOST: &str = "Host";
 const JOIN: &str = "Join";
 const EXIT: &str = "Exit";
 
+pub enum HostOrPlaySetting {
+    Host,
+    Join,
+    Play,
+}
+
+#[derive(Resource)]
+pub struct HostOrPlay (pub HostOrPlaySetting);
+
 #[derive(Component)]
 pub struct Menu;
 
@@ -72,6 +81,7 @@ pub fn menu_click_system (
     mut menu_items: Query<(&mut Text, &CalculatedSize), With<Menu>>,
     mut game_state: ResMut<NextState<GameState>>,
     mut exit: EventWriter<AppExit>,
+    mut commands: Commands,
 ) {
     let window = windows.get_single().unwrap();
     
@@ -92,15 +102,20 @@ pub fn menu_click_system (
 
                         match section.value.trim() {
 
-                            PLAY => game_state.set(GameState::Gameplay),
+                            PLAY => {
+                                commands.insert_resource(HostOrPlay(HostOrPlaySetting::Play));
+                                game_state.set(GameState::Gameplay);
+                            },
                             HOST => {
-                                println!("host");
+                                commands.insert_resource(HostOrPlay(HostOrPlaySetting::Host));
                                 game_state.set(GameState::Gameplay);
                             },
                             EXIT => exit.send(AppExit),
-                            JOIN => println!("Join"),
-                            _ => println!("What?
-                            "),
+                            JOIN => {
+                                commands.insert_resource(HostOrPlay(HostOrPlaySetting::Join));
+                                game_state.set(GameState::Gameplay);                                
+                            },
+                            _ => println!("What?"),
                         }
 
                     }

@@ -3,7 +3,7 @@ use std::{net::UdpSocket, time::SystemTime};
 use bevy::prelude::*;
 use bevy_renet::{renet::{RenetError, RenetServer, DefaultChannel, RenetConnectionConfig, ServerConfig, ServerAuthentication}, RenetServerPlugin};
 
-use crate::client::{ClientMessage, ServerMessage, PROTOCOL_ID};
+use crate::{client::{ClientMessage, ServerMessage, PROTOCOL_ID}, main_menu::{HostOrPlay, HostOrPlaySetting}};
 
 // this version of the server bounces the messages but doesn't send them to itself
 // would also like to send messages when a user disconnects for the player to be despawned.
@@ -14,12 +14,20 @@ impl Plugin for MyServerPlugin {
     fn build(&self, app: &mut App) {
 
         app
-            .add_plugins(MinimalPlugins)
             .add_plugin(RenetServerPlugin::default())
             .insert_resource(new_renet_server())
-            .add_system(panic_on_error_system)
-            .add_system(server_update_system);
+            .add_system(panic_on_error_system.run_if(run_if_host))
+            .add_system(server_update_system.run_if(run_if_host));
 
+    }
+}
+
+fn run_if_host (
+    host_or_join: Res<HostOrPlay>,
+) -> bool {
+    match host_or_join.0 {
+        HostOrPlaySetting::Host => true,
+        _ => false,
     }
 }
 

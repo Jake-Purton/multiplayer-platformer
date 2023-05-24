@@ -15,11 +15,12 @@ use bevy_rapier2d::prelude::*;
 use bevy_kira_audio::prelude::*;
 use death::DeathPlugin;
 use grappling_hook::GrapplePlugin;
-use main_menu::MenuPlugin;
+use main_menu::{MenuPlugin, HostOrPlay, HostOrPlaySetting};
 use moving_block::MovingBlockPlugin;
 use next_level::NextLevelPlugin;
 use platform::PlatformPlugin;
 use player::PlayerPlugin;
+use server::MyServerPlugin;
 use startup_plugin::StartupPlugin;
 use win::WinPlugin;
 
@@ -64,6 +65,8 @@ fn main() {
         .add_plugin(WinPlugin)
         .add_plugin(MenuPlugin)
         .add_plugin(MovingBlockPlugin)
+        .add_plugin(MyServerPlugin)
+        .insert_resource(HostOrPlay(HostOrPlaySetting::Play))
         // .add_plugin(WorldInspectorPlugin::default())
         // .add_plugin(RapierDebugRenderPlugin::default())
         .run();

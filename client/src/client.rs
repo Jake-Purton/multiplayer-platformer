@@ -18,7 +18,7 @@ use local_ip_address::local_ip;
 
 use std::{net::UdpSocket, time::SystemTime, collections::HashMap};
 
-use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures};
+use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures, main_menu::{HostOrPlay, HostOrPlaySetting}};
 
 pub struct MyClientPlugin;
 
@@ -28,11 +28,20 @@ impl Plugin for MyClientPlugin {
             .add_plugin(RenetClientPlugin::default())
             .init_resource::<ClientMessages>()
             .insert_resource(UserIdMap(HashMap::new()))
-            .add_system(client_update_system.in_set(OnUpdate(GameState::Gameplay)))
-            .add_system(respawn_other_players.in_schedule(OnEnter(GameState::Gameplay)))
+            .add_system(client_update_system.in_set(OnUpdate(GameState::Gameplay)).run_if(run_if_client))
+            .add_system(respawn_other_players.in_schedule(OnEnter(GameState::Gameplay)).run_if(run_if_client))
             .insert_resource(new_renet_client())
-            .add_system(client_send_input);
+            .add_system(client_send_input.run_if(run_if_client));
 
+    }
+}
+
+fn run_if_client (
+    host_or_join: Res<HostOrPlay>,
+) -> bool {
+    match host_or_join.0 {
+        HostOrPlaySetting::Join => true,
+        _ => false,
     }
 }
 
