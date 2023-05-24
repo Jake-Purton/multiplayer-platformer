@@ -32,7 +32,7 @@ fn run_if_host (
 }
 
 pub fn new_renet_server() -> RenetServer {
-    let server_addr = SocketAddr::new(local_ip().unwrap(), 5000);
+    let server_addr = SocketAddr::new(local_ip().unwrap(), 8080);
     let socket = UdpSocket::bind(server_addr).unwrap();
     let connection_config = RenetConnectionConfig::default();
     let server_config = ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);
