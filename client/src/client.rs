@@ -71,7 +71,7 @@ pub enum ServerMessage {
 }
 
 pub fn new_renet_client() -> RenetClient {
-    let server_addr = "192.168.1.235:5000".parse().unwrap();
+    let server_addr = "192.168.1.235:8080".parse().unwrap();
     let client_addr = SocketAddr::new(local_ip().unwrap(), 5000);
     let socket = UdpSocket::bind(client_addr).unwrap();
     let connection_config = RenetConnectionConfig::default();
