@@ -18,7 +18,7 @@ use local_ip_address::local_ip;
 
 use std::{net::UdpSocket, time::SystemTime, collections::HashMap};
 
-use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures, main_menu::{HostOrPlay, HostOrPlaySetting}};
+use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures, main_menu::{HostClient}, MultiplayerSetting};
 
 pub struct MyClientPlugin;
 
@@ -37,10 +37,10 @@ impl Plugin for MyClientPlugin {
 }
 
 fn run_if_client (
-    host_or_join: Res<HostOrPlay>,
+    host_or_join: Res<MultiplayerSetting>,
 ) -> bool {
     match host_or_join.0 {
-        HostOrPlaySetting::Join => true,
+        HostClient::Client => true,
         _ => false,
     }
 }
@@ -70,7 +70,7 @@ pub enum ServerMessage {
     PlayerPosition {id: u64, position: Vec3},
 }
 
-fn new_renet_client() -> RenetClient {
+pub fn new_renet_client() -> RenetClient {
     let server_addr = "192.168.1.235:5000".parse().unwrap();
     let client_addr = SocketAddr::new(local_ip().unwrap(), 5000);
     let socket = UdpSocket::bind(client_addr).unwrap();
