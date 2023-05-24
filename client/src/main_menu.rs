@@ -1,6 +1,6 @@
 use bevy::{prelude::*, app::AppExit, window::PrimaryWindow};
 
-use crate::{GameState, startup_plugin::despawn_everything};
+use crate::{GameState, startup_plugin::despawn_everything, server::new_renet_server, MultiplayerSetting, client::new_renet_client};
 
 pub struct MenuPlugin;
 
@@ -17,6 +17,12 @@ const PLAY: &str = "Play";
 const HOST: &str = "Host";
 const JOIN: &str = "Join";
 const EXIT: &str = "Exit";
+
+pub enum HostClient {
+    Host,
+    Client,
+    Play,
+}
 
 #[derive(Component)]
 pub struct Menu;
@@ -72,6 +78,7 @@ pub fn menu_click_system (
     mut menu_items: Query<(&mut Text, &CalculatedSize), With<Menu>>,
     mut game_state: ResMut<NextState<GameState>>,
     mut exit: EventWriter<AppExit>,
+    mut commands: Commands,
 ) {
     let window = windows.get_single().unwrap();
     
@@ -83,11 +90,10 @@ pub fn menu_click_system (
                 
                 // to find the position of text: i * size / total_items is the highest y value. lowest is highest + 70
                 let highest = window.height() - (i as f32 * size.size.y / 4.0);
-                let lowest = highest - 70.0;
+                let lowest = highest - 60.0;
                 
                 if position.y < highest && position.y > lowest {
-                    section.style.color = Color::RED;
-
+                    section.style.color = Color::WHITE;
                     if buttons.just_pressed(MouseButton::Left) {
 
                         match section.value.trim() {
@@ -95,10 +101,17 @@ pub fn menu_click_system (
                             PLAY => game_state.set(GameState::Gameplay),
                             HOST => {
                                 println!("host");
+                                commands.insert_resource(new_renet_server());
+                                commands.insert_resource(MultiplayerSetting(HostClient::Host));
                                 game_state.set(GameState::Gameplay);
                             },
                             EXIT => exit.send(AppExit),
-                            JOIN => println!("Join"),
+                            JOIN => {
+                                println!("Join");
+                                commands.insert_resource(new_renet_client());
+                                commands.insert_resource(MultiplayerSetting(HostClient::Client));
+                                game_state.set(GameState::Gameplay);
+                            },
                             _ => println!("What?
                             "),
                         }

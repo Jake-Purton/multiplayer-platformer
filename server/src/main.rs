@@ -6,7 +6,9 @@ use bevy_renet::{
     }, RenetServerPlugin,
 };
 
-use std::time::SystemTime;
+use local_ip_address::local_ip;
+
+use std::{time::SystemTime, net::SocketAddr};
 use std::net::UdpSocket;
 
 use serde::{Deserialize, Serialize};
@@ -26,7 +28,7 @@ pub enum ClientMessage {
 }
 
 fn new_renet_server() -> RenetServer {
-    let server_addr = "127.0.0.1:5000".parse().unwrap();
+    let server_addr = SocketAddr::new(local_ip().unwrap(), 5000);
     let socket = UdpSocket::bind(server_addr).unwrap();
     let connection_config = RenetConnectionConfig::default();
     let server_config = ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);

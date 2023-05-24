@@ -15,7 +15,7 @@ use bevy_rapier2d::prelude::*;
 use bevy_kira_audio::prelude::*;
 use death::DeathPlugin;
 use grappling_hook::GrapplePlugin;
-use main_menu::MenuPlugin;
+use main_menu::{MenuPlugin, HostClient};
 use moving_block::MovingBlockPlugin;
 use next_level::NextLevelPlugin;
 use platform::PlatformPlugin;
@@ -47,6 +47,9 @@ pub enum GameState {
     Menu,
 }
 
+#[derive(Resource)]
+pub struct MultiplayerSetting(HostClient);
+
 fn main() {
 
     App::new()
@@ -64,6 +67,7 @@ fn main() {
         .add_plugin(WinPlugin)
         .add_plugin(MenuPlugin)
         .add_plugin(MovingBlockPlugin)
+        .insert_resource(MultiplayerSetting(HostClient::Play))
         // .add_plugin(WorldInspectorPlugin::default())
         // .add_plugin(RapierDebugRenderPlugin::default())
         .run();
