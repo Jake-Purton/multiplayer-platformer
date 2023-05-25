@@ -112,8 +112,7 @@ pub fn menu_click_system (
                                 commands.insert_resource(MultiplayerSetting(HostClient::Client));
                                 game_state.set(GameState::Gameplay);
                             },
-                            _ => println!("What?
-                            "),
+                            _ => println!("What?"),
                         }
 
                     }

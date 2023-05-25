@@ -21,7 +21,6 @@ use moving_block::MovingBlockPlugin;
 use next_level::NextLevelPlugin;
 use platform::PlatformPlugin;
 use player::PlayerPlugin;
-use server::MyServerPlugin;
 use startup_plugin::StartupPlugin;
 use win::WinPlugin;
 
@@ -69,7 +68,6 @@ fn main() {
         .add_plugin(WinPlugin)
         .add_plugin(MenuPlugin)
         .add_plugin(MovingBlockPlugin)
-        .add_plugin(MyServerPlugin)
         .add_plugin(MyClientPlugin)
         .insert_resource(MultiplayerSetting(HostClient::Play))
         // .add_plugin(WorldInspectorPlugin::default())
