@@ -18,7 +18,7 @@ use local_ip_address::local_ip;
 
 use std::{net::UdpSocket, time::SystemTime, collections::HashMap};
 
-use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures, main_menu::HostClient, MultiplayerSetting};
+use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures, main_menu::HostClient, MultiplayerSetting, server::{SERVER_ADDR, CLIENT_PORT, SERVER_PORT}};
 
 pub struct MyClientPlugin;
 
@@ -30,7 +30,6 @@ impl Plugin for MyClientPlugin {
             .insert_resource(UserIdMap(HashMap::new()))
             .add_system(client_update_system.in_set(OnUpdate(GameState::Gameplay)).run_if(run_if_client))
             .add_system(respawn_other_players.in_schedule(OnEnter(GameState::Gameplay)).run_if(run_if_client))
-            .insert_resource(new_renet_client())
             .add_system(client_send_input.run_if(run_if_client));
 
     }
@@ -41,6 +40,7 @@ fn run_if_client (
 ) -> bool {
     match host_or_join.0 {
         HostClient::Client => true,
+        HostClient::Host => true,
         _ => false,
     }
 }
@@ -71,8 +71,8 @@ pub enum ServerMessage {
 }
 
 pub fn new_renet_client() -> RenetClient {
-    let server_addr = "192.168.1.235:8080".parse().unwrap();
-    let client_addr = SocketAddr::new(local_ip().unwrap(), 5000);
+    let server_addr = format!("{}:{}", SERVER_ADDR, SERVER_PORT).parse().unwrap();
+    let client_addr = SocketAddr::new(local_ip().unwrap(), CLIENT_PORT);
     let socket = UdpSocket::bind(client_addr).unwrap();
     let connection_config = RenetConnectionConfig::default();
     let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();

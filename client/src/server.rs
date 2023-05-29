@@ -1,6 +1,6 @@
 use std::{net::{UdpSocket, SocketAddr}, time::SystemTime};
 
-use bevy::prelude::*;
+use bevy::{prelude::*};
 use bevy_renet::{renet::{RenetError, RenetServer, DefaultChannel, RenetConnectionConfig, ServerConfig, ServerAuthentication}, RenetServerPlugin};
 use local_ip_address::local_ip;
 
@@ -8,6 +8,10 @@ use crate::{client::{ClientMessage, ServerMessage, PROTOCOL_ID}, main_menu::Host
 
 // this version of the server bounces the messages but doesn't send them to itself
 // would also like to send messages when a user disconnects for the player to be despawned.
+
+pub const SERVER_PORT: u16 = 5000;
+pub const SERVER_ADDR: &str = "192.168.1.235";
+pub const CLIENT_PORT: u16 = 5001;
 
 pub struct MyServerPlugin;
 
@@ -18,7 +22,6 @@ impl Plugin for MyServerPlugin {
             .add_plugin(RenetServerPlugin::default())
             .add_system(panic_on_error_system.run_if(run_if_host))
             .add_system(server_update_system.run_if(run_if_host));
-
     }
 }
 
@@ -32,7 +35,7 @@ fn run_if_host (
 }
 
 pub fn new_renet_server() -> RenetServer {
-    let server_addr = SocketAddr::new(local_ip().unwrap(), 8080);
+    let server_addr = SocketAddr::new(local_ip().unwrap(), SERVER_PORT);
     let socket = UdpSocket::bind(server_addr).unwrap();
     let connection_config = RenetConnectionConfig::default();
     let server_config = ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);

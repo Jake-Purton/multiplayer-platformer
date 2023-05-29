@@ -1,6 +1,6 @@
 use bevy::{prelude::*, app::AppExit, window::PrimaryWindow};
 
-use crate::{GameState, startup_plugin::despawn_everything, server::new_renet_server, MultiplayerSetting, client::new_renet_client};
+use crate::{GameState, startup_plugin::despawn_everything, MultiplayerSetting, client::new_renet_client, server::new_renet_server};
 
 pub struct MenuPlugin;
 
@@ -101,8 +101,9 @@ pub fn menu_click_system (
                             PLAY => game_state.set(GameState::Gameplay),
                             HOST => {
                                 println!("host");
-                                commands.insert_resource(new_renet_server());
                                 commands.insert_resource(MultiplayerSetting(HostClient::Host));
+                                commands.insert_resource(new_renet_client());
+                                commands.insert_resource(new_renet_server());
                                 game_state.set(GameState::Gameplay);
                             },
                             EXIT => exit.send(AppExit),
