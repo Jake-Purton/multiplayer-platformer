@@ -1,10 +1,10 @@
 use std::{net::{UdpSocket, SocketAddr}, time::SystemTime};
 
 use bevy::{prelude::*};
-use bevy_renet::{renet::{RenetError, RenetServer, DefaultChannel, RenetConnectionConfig, ServerConfig, ServerAuthentication}, RenetServerPlugin};
+use bevy_renet::{renet::{RenetError, RenetServer, DefaultChannel, RenetConnectionConfig, ServerConfig, ServerAuthentication, ServerEvent}, RenetServerPlugin};
 use local_ip_address::local_ip;
 
-use crate::{client::{ClientMessage, ServerMessage, PROTOCOL_ID}, main_menu::HostClient, MultiplayerSetting};
+use crate::{client::{ClientMessage, PROTOCOL_ID}, main_menu::HostClient, MultiplayerSetting};
 
 // this version of the server bounces the messages but doesn't send them to itself
 // would also like to send messages when a user disconnects for the player to be despawned.
@@ -44,9 +44,11 @@ pub fn new_renet_server() -> RenetServer {
 }
 
 // If any error is found we just panic
+// ^^ OVERRIDDEN > ;)
 fn panic_on_error_system(mut renet_error: EventReader<RenetError>) {
     for e in renet_error.iter() {
-        panic!("{}", e);
+        // panic!("{}", e);
+        println!("{}", e);
     }
 }
 
@@ -59,11 +61,24 @@ fn server_update_system(
             let client_message: ClientMessage = bincode::deserialize(&message).unwrap();
 
             match client_message {
-                ClientMessage::PlayerPosition(vec) => {
-                    let message = ServerMessage::PlayerPosition { id: client_id, position: vec };
-                    server.broadcast_message_except(client_id, DefaultChannel::Unreliable, bincode::serialize(&message).unwrap())
-                },
+                // ClientMessage::PlayerPosition(vec) => {
+                //     let message = ServerMessage::PlayerPosition { id: client_id, position: vec };
+                //     server.broadcast_message_except(client_id, DefaultChannel::Unreliable, bincode::serialize(&message).unwrap())
+                // },
+                _ => (),
             }
         }
     }
+
+    while let Some(event) = server.get_event() {
+        match event {
+            ServerEvent::ClientConnected ( client_id, _) => {
+                println!("Client {client_id} connected");
+            }
+            ServerEvent::ClientDisconnected( client_id ) => {
+                println!("Client {client_id} disconnected: BECAUSE");
+            }
+        }
+    }
+
 }
