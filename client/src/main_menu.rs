@@ -102,14 +102,14 @@ pub fn menu_click_system (
                             HOST => {
                                 println!("host");
                                 commands.insert_resource(MultiplayerSetting(HostClient::Host));
-                                commands.insert_resource(new_renet_client());
+                                commands.insert_resource(new_renet_client(0));
                                 commands.insert_resource(new_renet_server());
                                 game_state.set(GameState::Gameplay);
                             },
                             EXIT => exit.send(AppExit),
                             JOIN => {
                                 println!("Join");
-                                commands.insert_resource(new_renet_client());
+                                commands.insert_resource(new_renet_client(0));
                                 commands.insert_resource(MultiplayerSetting(HostClient::Client));
                                 game_state.set(GameState::Gameplay);
                             },

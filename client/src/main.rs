@@ -16,6 +16,7 @@ use bevy_kira_audio::prelude::*;
 use client::MyClientPlugin;
 use death::DeathPlugin;
 use grappling_hook::GrapplePlugin;
+use local_ip_address::local_ip;
 use main_menu::{MenuPlugin, HostClient};
 use moving_block::MovingBlockPlugin;
 use next_level::NextLevelPlugin;
@@ -53,6 +54,8 @@ pub enum GameState {
 pub struct MultiplayerSetting(HostClient);
 
 fn main() {
+
+    println!("{}", local_ip().unwrap());
 
     App::new()
         .add_state::<GameState>()

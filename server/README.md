@@ -1,3 +1,0 @@
-```sh
-trunk serve
-```

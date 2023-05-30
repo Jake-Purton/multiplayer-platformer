@@ -70,20 +70,29 @@ pub enum ServerMessage {
     PlayerPosition {id: u64, position: Vec3},
 }
 
-pub fn new_renet_client() -> RenetClient {
+pub fn new_renet_client(number: u16) -> RenetClient {
     let server_addr = format!("{}:{}", SERVER_ADDR, SERVER_PORT).parse().unwrap();
-    let client_addr = SocketAddr::new(local_ip().unwrap(), CLIENT_PORT);
-    let socket = UdpSocket::bind(client_addr).unwrap();
-    let connection_config = RenetConnectionConfig::default();
-    let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
-    let client_id = current_time.as_millis() as u64;
-    let authentication = ClientAuthentication::Unsecure {
-        client_id,
-        protocol_id: PROTOCOL_ID,
-        server_addr,
-        user_data: None,
-    };
-    RenetClient::new(current_time, socket, connection_config, authentication).unwrap()
+    let client_addr = SocketAddr::new(local_ip().unwrap(), CLIENT_PORT + number);
+
+    if let Ok(socket) = UdpSocket::bind(client_addr) {
+
+        let connection_config = RenetConnectionConfig::default();
+        let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+        let client_id = current_time.as_millis() as u64;
+        let authentication = ClientAuthentication::Unsecure {
+            client_id,
+            protocol_id: PROTOCOL_ID,
+            server_addr,
+            user_data: None,
+        };
+    
+        RenetClient::new(current_time, socket, connection_config, authentication).unwrap()
+
+    } else {
+
+        new_renet_client(number + 1)
+
+    }
 }
 
 fn client_send_input(client_messages: Res<ClientMessages>, mut client: ResMut<RenetClient>, player_position: Query<&Transform, With<Player>>) {
