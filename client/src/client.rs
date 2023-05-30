@@ -6,7 +6,6 @@ use bevy_renet::{
     },
     RenetClientPlugin,
 };
-use serde::{Serialize, Deserialize};
 
 use std::net::SocketAddr;
 use local_ip_address::local_ip;
@@ -18,7 +17,7 @@ use local_ip_address::local_ip;
 
 use std::{net::UdpSocket, time::SystemTime, collections::HashMap};
 
-use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures, main_menu::HostClient, MultiplayerSetting, server::{SERVER_ADDR, CLIENT_PORT, SERVER_PORT}};
+use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures, main_menu::HostClient, MultiplayerSetting, server::{SERVER_ADDR, CLIENT_PORT, SERVER_PORT}, messages::{ClientMessageUnreliable, ServerMessageUnreliable}};
 
 pub struct MyClientPlugin;
 
@@ -26,7 +25,7 @@ impl Plugin for MyClientPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_plugin(RenetClientPlugin::default())
-            .init_resource::<ClientMessages>()
+            // .init_resource::<ClientMessages>()
             .insert_resource(UserIdMap(HashMap::new()))
             .add_system(client_update_system.in_set(OnUpdate(GameState::Gameplay)).run_if(run_if_client))
             .add_system(respawn_other_players.in_schedule(OnEnter(GameState::Gameplay)).run_if(run_if_client))
@@ -53,23 +52,6 @@ pub struct UserIdMap(HashMap<u64, Vec3>);
 
 pub const PROTOCOL_ID: u64 = 8;
 
-#[derive(Debug, Default, Serialize, Deserialize, Component, Resource)]
-pub struct ClientMessages {
-    messages: Vec<ClientMessage>
-}
-
-#[derive(Debug, Serialize, Deserialize, Component, Resource)]
-pub enum ClientMessage {
-    PlayerPosition(Vec3),
-}
-
-#[derive(Debug, Serialize, Deserialize, Component)]
-pub enum ServerMessage {
-    PlayerConnected { id: u64 },
-    PlayerDisconnected { id: u64 },
-    PlayerPosition {id: u64, position: Vec3},
-}
-
 pub fn new_renet_client(number: u16) -> RenetClient {
     let server_addr = format!("{}:{}", SERVER_ADDR, SERVER_PORT).parse().unwrap();
     let client_addr = SocketAddr::new(local_ip().unwrap(), CLIENT_PORT + number);
@@ -95,17 +77,21 @@ pub fn new_renet_client(number: u16) -> RenetClient {
     }
 }
 
-fn client_send_input(client_messages: Res<ClientMessages>, mut client: ResMut<RenetClient>, player_position: Query<&Transform, With<Player>>) {
-    for message in &client_messages.messages {
+fn client_send_input(
+    // client_messages: Res<ClientMessages>, 
+    mut client: ResMut<RenetClient>, 
+    player_position: Query<&Transform, With<Player>>
+) {
+    // for message in &client_messages.messages {
         
-        let input_message = bincode::serialize(&message).unwrap();
+    //     let input_message = bincode::serialize(&message).unwrap();
 
-        client.send_message(DefaultChannel::Unreliable, input_message);
-    }
+    //     client.send_message(DefaultChannel::Unreliable, input_message);
+    // }
 
     for pos in player_position.iter() {
 
-        let message = ClientMessage::PlayerPosition(pos.translation);
+        let message = ClientMessageUnreliable::PlayerPosition(pos.translation);
         let input_message = bincode::serialize(&message).unwrap();
 
         client.send_message(DefaultChannel::Unreliable, input_message);
@@ -122,10 +108,10 @@ fn client_update_system(
 ) {
 
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
-        let server_message: ServerMessage = bincode::deserialize(&message).unwrap();
+        let server_message: ServerMessageUnreliable = bincode::deserialize(&message).unwrap();
 
         match server_message {
-            ServerMessage::PlayerPosition{ id: a, position: pos} => {
+            ServerMessageUnreliable::PlayerPosition{ id: a, position: pos} => {
                 if map.0.insert(a, pos).is_none() {
 
                     // spawn the entity and label it a
@@ -143,7 +129,6 @@ fn client_update_system(
                         .insert(AnotherPlayer(a));
                 }
             },
-            _ => println!("another message")
         }
     }
 

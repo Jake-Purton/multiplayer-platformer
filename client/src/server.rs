@@ -1,10 +1,10 @@
 use std::{net::{UdpSocket, SocketAddr}, time::SystemTime};
 
-use bevy::{prelude::*};
+use bevy::prelude::*;
 use bevy_renet::{renet::{RenetError, RenetServer, DefaultChannel, RenetConnectionConfig, ServerConfig, ServerAuthentication, ServerEvent}, RenetServerPlugin};
 use local_ip_address::local_ip;
 
-use crate::{client::{ClientMessage, PROTOCOL_ID, ServerMessage}, main_menu::HostClient, MultiplayerSetting};
+use crate::{client::PROTOCOL_ID, main_menu::HostClient, MultiplayerSetting, messages::{ServerMessageUnreliable, ServerMessageReliable, ClientMessageUnreliable, ClientMessageReliable}};
 
 // this version of the server bounces the messages but doesn't send them to itself
 // would also like to send messages when a user disconnects for the player to be despawned.
@@ -58,12 +58,28 @@ fn server_update_system(
 
     for client_id in server.clients_id().into_iter() {
         while let Some(message) = server.receive_message(client_id, DefaultChannel::Unreliable) {
-            let client_message: ClientMessage = bincode::deserialize(&message).unwrap();
+            let client_message: ClientMessageUnreliable = bincode::deserialize(&message).unwrap();
 
             match client_message {
-                ClientMessage::PlayerPosition(vec) => {
-                    let message = ServerMessage::PlayerPosition { id: client_id, position: vec };
+                ClientMessageUnreliable::PlayerPosition(vec) => {
+                    let message = ServerMessageUnreliable::PlayerPosition { id: client_id, position: vec };
                     server.broadcast_message_except(client_id, DefaultChannel::Unreliable, bincode::serialize(&message).unwrap())
+                },
+
+            }
+        }
+
+        while let Some(message) = server.receive_message(client_id, DefaultChannel::Reliable) {
+            let client_message: ClientMessageReliable = bincode::deserialize(&message).unwrap();
+
+            match client_message {
+                ClientMessageReliable::DebugMessage(string) => {
+                    println!("server recieved message: {}", string)
+                },
+                ClientMessageReliable::Ping => {
+                    let message = ServerMessageReliable::Pong;
+                    println!("ping recieved from {}", client_id);
+                    server.send_message(client_id, DefaultChannel::Reliable, bincode::serialize(&message).unwrap())
                 },
             }
         }
@@ -76,6 +92,9 @@ fn server_update_system(
             }
             ServerEvent::ClientDisconnected( client_id ) => {
                 println!("Client {client_id} disconnected: BECAUSE");
+                let message = ServerMessageReliable::PlayerDisconnected { id: client_id };
+                server.broadcast_message(DefaultChannel::Reliable, bincode::serialize(&message).unwrap())
+
             }
         }
     }
