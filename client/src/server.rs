@@ -61,8 +61,8 @@ fn server_update_system(
             let client_message: ClientMessageUnreliable = bincode::deserialize(&message).unwrap();
 
             match client_message {
-                ClientMessageUnreliable::PlayerPosition(vec) => {
-                    let message = ServerMessageUnreliable::PlayerPosition { id: client_id, position: vec };
+                ClientMessageUnreliable::PlayerPosition {level, pos } => {
+                    let message = ServerMessageUnreliable::PlayerPosition { id: client_id, position: pos, level };
                     server.broadcast_message_except(client_id, DefaultChannel::Unreliable, bincode::serialize(&message).unwrap())
                 },
 
@@ -99,4 +99,4 @@ fn server_update_system(
         }
     }
 
-}
+}// player level change
