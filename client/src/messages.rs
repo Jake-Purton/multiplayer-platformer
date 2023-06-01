@@ -32,6 +32,9 @@ pub enum ClientMessageReliable {
     Ping,
 }
 
+#[derive(Resource)]
+pub struct IpToJoin(String);
+
 // a resource that can be updated by systems to send messages
 // #[derive(Debug, Default, Serialize, Deserialize, Component, Resource)]
 // pub struct ClientMessages {

@@ -1,4 +1,7 @@
+use std::io::stdin;
+
 use bevy::{prelude::*, app::AppExit, window::PrimaryWindow};
+use local_ip_address::local_ip;
 
 use crate::{GameState, startup_plugin::despawn_everything, MultiplayerSetting, client::new_renet_client, server::new_renet_server};
 
@@ -101,15 +104,18 @@ pub fn menu_click_system (
                             PLAY => game_state.set(GameState::Gameplay),
                             HOST => {
                                 println!("host");
+
                                 commands.insert_resource(MultiplayerSetting(HostClient::Host));
-                                commands.insert_resource(new_renet_client(0));
+                                commands.insert_resource(new_renet_client(0, &local_ip().unwrap().to_string()));
                                 commands.insert_resource(new_renet_server());
                                 game_state.set(GameState::Gameplay);
                             },
                             EXIT => exit.send(AppExit),
                             JOIN => {
                                 println!("Join");
-                                commands.insert_resource(new_renet_client(0));
+                                let mut ip = String::new();
+                                stdin().read_line(&mut ip).unwrap();
+                                commands.insert_resource(new_renet_client(0, ip.trim()));
                                 commands.insert_resource(MultiplayerSetting(HostClient::Client));
                                 game_state.set(GameState::Gameplay);
                             },

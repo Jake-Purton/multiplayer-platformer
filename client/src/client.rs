@@ -16,7 +16,7 @@ use local_ip_address::local_ip;
 
 use std::{net::UdpSocket, time::SystemTime, collections::HashMap};
 
-use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures, main_menu::HostClient, MultiplayerSetting, server::{SERVER_ADDR, CLIENT_PORT, SERVER_PORT}, messages::{ClientMessageUnreliable, ServerMessageUnreliable}, CurrentLevel};
+use crate::{player::Player, GameState, FELLA_SPRITE_SIZE, startup_plugin::GameTextures, main_menu::HostClient, MultiplayerSetting, server::{CLIENT_PORT, SERVER_PORT}, messages::{ClientMessageUnreliable, ServerMessageUnreliable}, CurrentLevel};
 
 pub struct MyClientPlugin;
 
@@ -53,8 +53,8 @@ pub struct UserIdMap(HashMap<u64, Vec3>);
 
 pub const PROTOCOL_ID: u64 = 8;
 
-pub fn new_renet_client(number: u16) -> RenetClient {
-    let server_addr = format!("{}:{}", SERVER_ADDR, SERVER_PORT).parse().unwrap();
+pub fn new_renet_client(number: u16, ip: &str) -> RenetClient {
+    let server_addr = format!("{}:{}", ip, SERVER_PORT).parse().unwrap();
     let client_addr = SocketAddr::new(local_ip().unwrap(), CLIENT_PORT + number);
 
     if let Ok(socket) = UdpSocket::bind(client_addr) {
@@ -73,7 +73,7 @@ pub fn new_renet_client(number: u16) -> RenetClient {
 
     } else {
 
-        new_renet_client(number + 1)
+        new_renet_client(number + 1, ip)
 
     }
 }
