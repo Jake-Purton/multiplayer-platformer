@@ -10,6 +10,7 @@ mod grappling_hook;
 mod client;
 mod server;
 mod messages;
+mod join_menu;
 
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -27,6 +28,8 @@ use server::MyServerPlugin;
 use startup_plugin::StartupPlugin;
 use win::WinPlugin;
 
+use crate::join_menu::JoinMenuPlugin;
+
 const SPRITE_SCALE: f32 = 0.707106;
 const HOOK_SPRITE_SIZE: Vec2 = Vec2::new(24.0, 24.0);
 const HOOK_SPEED: f32 = 2000.0;
@@ -43,12 +46,13 @@ pub fn level_directory(level_number: u8) -> String {
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum GameState {
+    #[default]
+    Menu,
     Gameplay,
     Death,
     NextLevel,
     Win,
-    #[default]
-    Menu,
+    JoinMenu,
 }
 
 #[derive(Resource)]
@@ -75,6 +79,7 @@ fn main() {
         .add_plugin(MovingBlockPlugin)
         .add_plugin(MyClientPlugin)
         .add_plugin(MyServerPlugin)
+        .add_plugin(JoinMenuPlugin)
         .insert_resource(MultiplayerSetting(HostClient::Play))
         // .add_plugin(WorldInspectorPlugin::default())
         // .add_plugin(RapierDebugRenderPlugin::default())
