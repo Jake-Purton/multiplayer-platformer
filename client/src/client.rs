@@ -45,11 +45,10 @@ fn run_if_client (
 #[derive(Component)]
 pub struct AnotherPlayer {
     pub id: u64,
-    pub level: u8,
 }
 
 #[derive(Resource)]
-pub struct UserIdMap(HashMap<u64, Vec3>);
+pub struct UserIdMap(HashMap<u64, (Vec3, u8)>);
 
 pub const PROTOCOL_ID: u64 = 8;
 
@@ -116,7 +115,7 @@ fn client_update_system(
         match server_message {
             ServerMessageUnreliable::PlayerPosition{ id, position: pos, level} => {
 
-                let exists_in_map = map.0.insert(id, pos).is_some();
+                let exists_in_map = map.0.insert(id, (pos, level)).is_some();
 
                 if level == current_level.level_number && !exists_in_map {
 
@@ -133,7 +132,7 @@ fn client_update_system(
                         })
                         .insert(Collider::cuboid(FELLA_SPRITE_SIZE.x / 2.0, FELLA_SPRITE_SIZE.y / 2.0 ))
                         .insert(RigidBody::Fixed)
-                        .insert(AnotherPlayer { id, level });
+                        .insert(AnotherPlayer { id });
 
                 }
             },
@@ -142,17 +141,15 @@ fn client_update_system(
 
     for (entity, playerid, mut transform) in players.iter_mut() {
 
-        if playerid.level == current_level.level_number {
+        if let Some((pos, level)) = map.0.get(&playerid.id)  {
 
-            if let Some(pos) = map.0.get(&playerid.id)  { 
-                transform.translation = pos.clone() 
-            };
+            if *level == current_level.level_number {
 
-        } else {
+                transform.translation = pos.clone();
 
-            map.0.remove(&playerid.id);
-            commands.entity(entity).despawn();
-
-        }
+            } else {
+                commands.entity(entity).despawn();
+            }
+        };
     }
 }

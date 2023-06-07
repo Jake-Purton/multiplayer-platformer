@@ -112,8 +112,9 @@ pub fn menu_click_system (
                             },
                             EXIT => exit.send(AppExit),
                             JOIN => {
-                                println!("Join");
+                                println!("Join, input the server ip: ");
                                 let mut ip = String::new();
+
                                 stdin().read_line(&mut ip).unwrap();
                                 commands.insert_resource(new_renet_client(0, ip.trim()));
                                 commands.insert_resource(MultiplayerSetting(HostClient::Client));
