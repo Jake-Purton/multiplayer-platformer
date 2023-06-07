@@ -27,10 +27,7 @@ impl Plugin for MyServerPlugin {
 fn run_if_host (
     host: Res<MultiplayerSetting>
 ) -> bool {
-    match host.0 {
-        HostClient::Host => true,
-        _ => false,
-    }
+    matches!(host.0, HostClient::Host)
 }
 
 pub fn new_renet_server() -> RenetServer {

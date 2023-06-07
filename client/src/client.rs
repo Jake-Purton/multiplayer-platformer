@@ -35,11 +35,7 @@ impl Plugin for MyClientPlugin {
 fn run_if_client (
     host_or_join: Res<MultiplayerSetting>,
 ) -> bool {
-    match host_or_join.0 {
-        HostClient::Client => true,
-        HostClient::Host => true,
-        _ => false,
-    }
+    matches!(host_or_join.0, HostClient::Client | HostClient::Host)
 }
 
 #[derive(Component)]
@@ -145,7 +141,7 @@ fn client_update_system(
 
             if *level == current_level.level_number {
 
-                transform.translation = pos.clone();
+                transform.translation = *pos;
 
             } else {
                 commands.entity(entity).despawn();

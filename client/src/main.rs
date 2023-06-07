@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 mod platform;
 mod player;
 mod death;
@@ -11,6 +13,8 @@ mod client;
 mod server;
 mod messages;
 mod join_menu;
+
+use std::f32::consts::FRAC_1_SQRT_2;
 
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -30,7 +34,7 @@ use win::WinPlugin;
 
 use crate::join_menu::JoinMenuPlugin;
 
-const SPRITE_SCALE: f32 = 0.707106;
+const SPRITE_SCALE: f32 = FRAC_1_SQRT_2;
 const HOOK_SPRITE_SIZE: Vec2 = Vec2::new(24.0, 24.0);
 const HOOK_SPEED: f32 = 2000.0;
 const GRAPPLE_SPEED: f32 = 200.0;

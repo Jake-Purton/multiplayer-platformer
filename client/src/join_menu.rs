@@ -3,13 +3,11 @@ use std::{net::{SocketAddr, UdpSocket}, time::SystemTime};
 use bevy::prelude::*;
 use local_ip_address::local_ip;
 
-use crate::{GameState, server::{SERVER_PORT, CLIENT_PORT}, client::{PROTOCOL_ID}, main_menu::{Menu, HostClient}, MultiplayerSetting};
+use crate::{GameState, server::{SERVER_PORT, CLIENT_PORT}, client::{PROTOCOL_ID}, main_menu::{Menu, HostClient}, MultiplayerSetting, startup_plugin::despawn_everything};
 
-use bevy_renet::{
-    renet::{
+use bevy_renet::renet::{
         ClientAuthentication, RenetClient, RenetConnectionConfig,
-    },
-};
+    };
 
 pub enum BindError {
     Client,
@@ -26,6 +24,7 @@ impl Plugin for JoinMenuPlugin {
             .add_system(setup_join_menu.in_schedule(OnEnter(GameState::JoinMenu)))
             .add_system(join_input_ip.in_set(OnUpdate(GameState::JoinMenu)))
             .add_system(update_text.in_set(OnUpdate(GameState::JoinMenu)))
+            .add_system(despawn_everything.in_schedule(OnExit(GameState::JoinMenu)))
             .add_system(text_input.in_set(OnUpdate(GameState::JoinMenu)));
             
     }
@@ -122,7 +121,7 @@ fn join_input_ip (
 
 fn renet_client(ip: &str) -> Result<RenetClient, BindError> {
 
-    let split: Vec<_> = ip.split(".").collect();
+    let split: Vec<_> = ip.split('.').collect();
     if split.len() == 4 {
 
         let mut server_addr = ip.parse();

@@ -41,47 +41,44 @@ fn send_out_hook (
     game_textures: Res<GameTextures>,
     hooks: Query<&Hook>,
 ) {
-    if mouse.just_pressed(MouseButton::Right) {
+    if mouse.just_pressed(MouseButton::Right) && hooks.is_empty(){
 
-        if hooks.is_empty() {
+        let window = windows.get_single().unwrap();
+        let camera = camera.single();
 
-            let window = windows.get_single().unwrap();
-            let camera = camera.single();
-    
-            if let Some(mut position) = window.cursor_position() {
-                position.x -= (window.width() / 2.0) - camera.translation.x;
-                position.y -= (window.height() / 2.0) - camera.translation.y;
-    
-                let player = player.single();
-    
-                let mut direction = position - player.translation.truncate();
-    
-                direction /= direction.length();
-    
-                let angle = Vec2::Y.angle_between(direction);
-    
-                commands
-                    .spawn(SpriteBundle {
-                        texture: game_textures.hook.clone(),
-                        sprite: Sprite {
-                            custom_size: Some(HOOK_SPRITE_SIZE),
-                            ..Default::default()
-                        },
-                        transform: Transform {
-                            translation: player.translation + (20.0 * direction).extend(11.0),
-                            rotation: Quat::from_rotation_z(angle),
-                            ..Default::default()
-                        },
+        if let Some(mut position) = window.cursor_position() {
+            position.x -= (window.width() / 2.0) - camera.translation.x;
+            position.y -= (window.height() / 2.0) - camera.translation.y;
+
+            let player = player.single();
+
+            let mut direction = position - player.translation.truncate();
+
+            direction /= direction.length();
+
+            let angle = Vec2::Y.angle_between(direction);
+
+            commands
+                .spawn(SpriteBundle {
+                    texture: game_textures.hook.clone(),
+                    sprite: Sprite {
+                        custom_size: Some(HOOK_SPRITE_SIZE),
                         ..Default::default()
-                    })
-                    .insert(MovingGrappleHook {
-                        direction,
-                        size: HOOK_SPRITE_SIZE,
-                        timer: Timer::from_seconds(0.7, TimerMode::Once)
-                    })
-                    .insert(Hook);
-            
-            }
+                    },
+                    transform: Transform {
+                        translation: player.translation + (20.0 * direction).extend(11.0),
+                        rotation: Quat::from_rotation_z(angle),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                })
+                .insert(MovingGrappleHook {
+                    direction,
+                    size: HOOK_SPRITE_SIZE,
+                    timer: Timer::from_seconds(0.7, TimerMode::Once)
+                })
+                .insert(Hook);
+        
         }
     }
 }
