@@ -10,11 +10,15 @@ pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app
+            .insert_resource(IPString (String::new()))
             .add_system(setup_menu.in_schedule(OnEnter(GameState::Menu)))
             .add_system(menu_click_system.in_set(OnUpdate(GameState::Menu)))
-            .add_system(despawn_everything.in_schedule(OnExit(GameState::Menu)));
+            .add_system(despawn_everything.in_schedule(OnExit(GameState::Menu)))
+            .add_system(text_input.in_set(OnUpdate(GameState::Menu)));
+            
     }
 }
+
 
 const PLAY: &str = "Play";
 const HOST: &str = "Host";
@@ -29,6 +33,34 @@ pub enum HostClient {
 
 #[derive(Component)]
 pub struct Menu;
+
+#[derive(Resource)]
+pub struct IPString (String);
+
+fn text_input(
+    mut char_evr: EventReader<ReceivedCharacter>,
+    mut ip_string: ResMut<IPString>
+) {
+    for ev in char_evr.iter() {
+        let char = ev.char;
+
+        if char == '\x08' {
+            ip_string.0.pop();
+        } else if char.is_numeric() {
+            ip_string.0.push(char)
+        } else if char == '.' {
+            if let Some(a) = ip_string.0.pop() {
+                ip_string.0.push(a);
+                if a.is_numeric() {
+                    ip_string.0.push(char)
+                }
+            }
+        }
+    }
+
+    println!("{}", ip_string.0)
+
+}
 
 fn setup_menu (
     mut commands: Commands,
