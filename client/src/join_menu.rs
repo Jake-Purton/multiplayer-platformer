@@ -1,9 +1,8 @@
 use std::{net::{SocketAddr, UdpSocket}, time::SystemTime};
 
 use bevy::prelude::*;
-use local_ip_address::local_ip;
 
-use crate::{GameState, server::{SERVER_PORT, CLIENT_PORT}, client::{PROTOCOL_ID}, main_menu::{Menu, HostClient}, MultiplayerSetting, startup_plugin::despawn_everything};
+use crate::{GameState, server::{SERVER_PORT, CLIENT_PORT}, client::PROTOCOL_ID, main_menu::{Menu, HostClient}, MultiplayerSetting, startup_plugin::despawn_everything};
 
 use bevy_renet::renet::{
         ClientAuthentication, RenetClient, RenetConnectionConfig,
@@ -136,7 +135,7 @@ fn renet_client(ip: &str) -> Result<RenetClient, BindError> {
 
             for i in 0..16 {
 
-                let client_addr = SocketAddr::new(local_ip().unwrap(), CLIENT_PORT + i);
+                let client_addr = SocketAddr::new("0.0.0.0".parse().unwrap(), CLIENT_PORT + i);
             
                 if let Ok(socket) = UdpSocket::bind(client_addr) {
             

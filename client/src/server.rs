@@ -1,4 +1,4 @@
-use std::{net::{UdpSocket, SocketAddr}, time::SystemTime};
+use std::{net::{UdpSocket, SocketAddr, IpAddr}, time::SystemTime};
 
 use bevy::prelude::*;
 use bevy_renet::{renet::{RenetError, RenetServer, DefaultChannel, RenetConnectionConfig, ServerConfig, ServerAuthentication, ServerEvent}, RenetServerPlugin};
@@ -30,9 +30,18 @@ fn run_if_host (
     matches!(host.0, HostClient::Host)
 }
 
-pub fn new_renet_server() -> RenetServer {
-    let server_addr = SocketAddr::new(local_ip().unwrap(), SERVER_PORT);
-    let socket = UdpSocket::bind(server_addr).unwrap();
+pub fn new_renet_server(public_ip: IpAddr) -> RenetServer {
+
+    
+    
+    let inbound_server_addr = SocketAddr::new(local_ip().unwrap(), SERVER_PORT);
+    let socket = UdpSocket::bind(inbound_server_addr).unwrap();
+    
+    // Public hosting, requires port forwarding
+    let server_addr = SocketAddr::new(public_ip, SERVER_PORT);
+    
+    println!("{}", public_ip);
+    
     let connection_config = RenetConnectionConfig::default();
     let server_config = ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);
     let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
@@ -43,8 +52,8 @@ pub fn new_renet_server() -> RenetServer {
 // ^^ OVERRIDDEN > ;)
 fn panic_on_error_system(mut renet_error: EventReader<RenetError>) {
     for e in renet_error.iter() {
-        // panic!("{}", e);
-        println!("{}", e);
+        panic!("{}", e);
+        // println!("{}", e);
     }
 }
 

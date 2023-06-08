@@ -7,8 +7,7 @@ use bevy_renet::{
     RenetClientPlugin,
 };
 
-use std::net::SocketAddr;
-use local_ip_address::local_ip;
+use std::net::{SocketAddr, IpAddr};
 
 // messages that need to be sent: 
 // player position and level
@@ -48,9 +47,9 @@ pub struct UserIdMap(HashMap<u64, (Vec3, u8)>);
 
 pub const PROTOCOL_ID: u64 = 8;
 
-pub fn new_renet_client(number: u16, ip: &str) -> RenetClient {
-    let server_addr = format!("{}:{}", ip, SERVER_PORT).parse().unwrap();
-    let client_addr = SocketAddr::new(local_ip().unwrap(), CLIENT_PORT + number);
+pub fn new_renet_client(number: u16, ip: IpAddr) -> RenetClient {
+    let server_addr = SocketAddr::new(ip , SERVER_PORT);
+    let client_addr = SocketAddr::new("0.0.0.0".parse().unwrap(), CLIENT_PORT + number);
 
     if let Ok(socket) = UdpSocket::bind(client_addr) {
 
