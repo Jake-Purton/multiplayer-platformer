@@ -9,7 +9,7 @@ use crate::{client::PROTOCOL_ID, main_menu::HostClient, MultiplayerSetting, mess
 // this version of the server bounces the messages but doesn't send them to itself
 // would also like to send messages when a user disconnects for the player to be despawned.
 
-pub const SERVER_PORT: u16 = 5000;
+pub const SERVER_PORT: u16 = 42069;
 pub const CLIENT_PORT: u16 = 5001;
 
 pub struct MyServerPlugin;
