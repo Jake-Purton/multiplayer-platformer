@@ -49,6 +49,8 @@ pub const PROTOCOL_ID: u64 = 8;
 
 pub fn new_renet_client(number: u16, ip: IpAddr) -> RenetClient {
     let server_addr = SocketAddr::new(ip , SERVER_PORT);
+    println!("{}", server_addr);
+    // let server_addr = "109.145.5.231:5000".parse().unwrap();
     let client_addr = SocketAddr::new("0.0.0.0".parse().unwrap(), CLIENT_PORT + number);
 
     if let Ok(socket) = UdpSocket::bind(client_addr) {

@@ -31,17 +31,13 @@ fn run_if_host (
 }
 
 pub fn new_renet_server(public_ip: IpAddr) -> RenetServer {
-
-    
     
     let inbound_server_addr = SocketAddr::new(local_ip().unwrap(), SERVER_PORT);
     let socket = UdpSocket::bind(inbound_server_addr).unwrap();
     
     // Public hosting, requires port forwarding
     let server_addr = SocketAddr::new(public_ip, SERVER_PORT);
-    
-    println!("{}", public_ip);
-    
+        
     let connection_config = RenetConnectionConfig::default();
     let server_config = ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);
     let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
