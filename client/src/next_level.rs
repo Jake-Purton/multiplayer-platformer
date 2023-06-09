@@ -2,7 +2,7 @@ use std::fs::File;
 
 use bevy::prelude::*;
 
-use crate::{GameState, CurrentLevel, level_directory};
+use crate::{GameState, CurrentLevel, level_directory, MultiplayerSetting, main_menu::HostClient, client::UserIdMap};
 
 #[derive(Resource)]
 pub struct LevelTimer {
@@ -15,7 +15,23 @@ impl Plugin for NextLevelPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_system(next_level_system.in_schedule(OnEnter(GameState::NextLevel)))
+            .add_system(delete_hashmap.in_schedule(OnEnter(GameState::NextLevel)).run_if(run_if_online))
             .add_system(back_to_gameplay.in_set(OnUpdate(GameState::NextLevel)));
+    }
+}
+
+pub fn run_if_online (
+    host: Res<MultiplayerSetting>
+) -> bool {
+    !matches!(host.0, HostClient::Play)
+}
+
+pub fn delete_hashmap (
+    mut map: ResMut<UserIdMap>,
+) {
+    for i in map.0.clone().keys() {
+        map.0.remove(i);
+        println!("{}", i)
     }
 }
 

@@ -43,7 +43,7 @@ pub struct AnotherPlayer {
 }
 
 #[derive(Resource)]
-pub struct UserIdMap(HashMap<u64, (Vec3, u8)>);
+pub struct UserIdMap(pub HashMap<u64, (Vec3, u8)>);
 
 pub const PROTOCOL_ID: u64 = 8;
 
@@ -67,7 +67,7 @@ pub fn new_renet_client(number: u16, ip: IpAddr) -> RenetClient {
     
         RenetClient::new(current_time, socket, connection_config, authentication).unwrap()
 
-    } else {
+    } else { 
 
         new_renet_client(number + 1, ip)
 
@@ -104,7 +104,13 @@ fn client_update_system(
     mut commands: Commands,
     mut players: Query<(Entity, &AnotherPlayer, &mut Transform)>,
     current_level: Res<CurrentLevel>,
+    keys: Res<Input<KeyCode>>,
 ) {
+
+    if keys.just_pressed(KeyCode::P) {
+        println!("{:?}", map.0);
+    }
+
 
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
         let server_message: ServerMessageUnreliable = bincode::deserialize(&message).unwrap();
@@ -112,31 +118,45 @@ fn client_update_system(
         match server_message {
             ServerMessageUnreliable::PlayerPosition{ id, position: pos, level} => {
 
-                let exists_in_map = map.0.insert(id, (pos, level)).is_some();
+                if level == current_level.level_number {
 
-                if level == current_level.level_number && !exists_in_map {
-
-                    // spawn the entity and label it a
-                    commands
-                        .spawn(SpriteBundle {
-                            texture: game_textures.player.clone(),
-                            sprite: Sprite {
-                                custom_size: Some(FELLA_SPRITE_SIZE),
+                    let exists_in_map = map.0.insert(id, (pos, level,)).is_some();
+    
+                    if !exists_in_map {
+    
+                        // spawn the entity and label it a
+                        commands
+                            .spawn(SpriteBundle {
+                                texture: game_textures.player.clone(),
+                                sprite: Sprite {
+                                    custom_size: Some(FELLA_SPRITE_SIZE),
+                                    ..Default::default()
+                                },
+                                transform: Transform::from_translation(pos),
                                 ..Default::default()
-                            },
-                            transform: Transform::from_translation(pos),
-                            ..Default::default()
-                        })
-                        .insert(Collider::cuboid(FELLA_SPRITE_SIZE.x / 2.0, FELLA_SPRITE_SIZE.y / 2.0 ))
-                        .insert(RigidBody::Fixed)
-                        .insert(AnotherPlayer { id });
+                            })
+                            .insert(Collider::cuboid(FELLA_SPRITE_SIZE.x / 2.0, FELLA_SPRITE_SIZE.y / 2.0 ))
+                            .insert(RigidBody::Fixed)
+                            .insert(AnotherPlayer { id });
+    
+                    }
+                } else {
+                    let exists_in_map = map.0.insert(id, (pos, level,)).is_some();
 
+                    if !exists_in_map {
+                        map.0.remove(&id);
+                    }
                 }
+
             },
         }
     }
 
     for (entity, playerid, mut transform) in players.iter_mut() {
+
+        if keys.just_pressed(KeyCode::O) {
+            println!("entities: {}", playerid.id);
+        }
 
         if let Some((pos, level)) = map.0.get(&playerid.id)  {
 
@@ -146,6 +166,8 @@ fn client_update_system(
 
             } else {
                 commands.entity(entity).despawn();
+                map.0.remove(&playerid.id);
+                println!("here, {:?}", map.0);
             }
         };
     }
