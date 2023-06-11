@@ -117,7 +117,6 @@ pub fn menu_click_system (
                             },
                             EXIT => exit.send(AppExit),
                             JOIN => {
-                                println!("Join, input the server ip: ");
                                 game_state.set(GameState::JoinMenu);
                             },
                             _ => println!("What?"),

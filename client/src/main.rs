@@ -14,6 +14,7 @@ mod client;
 mod server;
 mod messages;
 mod join_menu;
+mod pinging;
 
 use std::f32::consts::FRAC_1_SQRT_2;
 
@@ -33,7 +34,7 @@ use server::MyServerPlugin;
 use startup_plugin::StartupPlugin;
 use win::WinPlugin;
 
-use crate::join_menu::JoinMenuPlugin;
+use crate::{join_menu::JoinMenuPlugin, pinging::PingPlugin};
 
 const SPRITE_SCALE: f32 = FRAC_1_SQRT_2;
 const HOOK_SPRITE_SIZE: Vec2 = Vec2::new(24.0, 24.0);
@@ -58,6 +59,7 @@ pub enum GameState {
     NextLevel,
     Win,
     JoinMenu,
+    CheckingConnection,
 }
 
 #[derive(Resource)]
@@ -85,6 +87,7 @@ fn main() {
         .add_plugin(MyClientPlugin)
         .add_plugin(MyServerPlugin)
         .add_plugin(JoinMenuPlugin)
+        .add_plugin(PingPlugin)
         .insert_resource(MultiplayerSetting(HostClient::Play))
         // .add_plugin(WorldInspectorPlugin::default())
         // .add_plugin(RapierDebugRenderPlugin::default())

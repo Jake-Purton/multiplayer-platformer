@@ -78,8 +78,8 @@ fn server_update_system(
                     println!("server recieved message: {}", string)
                 },
                 ClientMessageReliable::Ping => {
-                    let message = ServerMessageReliable::Pong;
                     println!("ping recieved from {}", client_id);
+                    let message = ServerMessageReliable::Pong;
                     server.send_message(client_id, DefaultChannel::Reliable, bincode::serialize(&message).unwrap())
                 },
             }
@@ -99,5 +99,4 @@ fn server_update_system(
             }
         }
     }
-
 }// player level change

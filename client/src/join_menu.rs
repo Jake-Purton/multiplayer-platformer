@@ -42,7 +42,7 @@ fn setup_join_menu (
 
     commands.spawn((
         TextBundle::from_section(
-            "",
+            "Server IP: ",
             TextStyle {
                 font: asset_server.load("fonts/Rubik-SemiBold.ttf"),
                 font_size: 60.0,
@@ -58,7 +58,7 @@ fn update_text (
     mut text: Query<&mut Text, With<Menu>>,
 ) {
     for mut text in &mut text {
-        text.sections[0].value = ip_string.0.clone();
+        text.sections[0].value = format!("Server IP: {}", ip_string.0.clone());
     }
 }
 
@@ -93,19 +93,13 @@ fn join_input_ip (
 
     if keys.just_pressed(KeyCode::Return) {
 
-        println!("here");
-
         let client = renet_client(ip.0.trim());
 
         match client {
             Ok(client) => {
                 commands.insert_resource(client);
-                println!("yeah baby");
-
-                // try and ping the server here
-
                 commands.insert_resource(MultiplayerSetting(HostClient::Client));
-                game_state.set(GameState::Gameplay);
+                game_state.set(GameState::CheckingConnection);
             },
             Err(a) => {
                 match a {
