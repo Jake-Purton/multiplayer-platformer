@@ -49,7 +49,6 @@ pub const PROTOCOL_ID: u64 = 6;
 
 pub fn new_renet_client(number: u16, ip: IpAddr) -> RenetClient {
     let server_addr = SocketAddr::new(ip , SERVER_PORT);
-    println!("{}", server_addr);
     let client_addr = SocketAddr::new("0.0.0.0".parse().unwrap(), CLIENT_PORT + number);
 
     if let Ok(socket) = UdpSocket::bind(client_addr) {
@@ -103,14 +102,7 @@ fn client_update_system(
     mut commands: Commands,
     mut players: Query<(Entity, &AnotherPlayer, &mut Transform)>,
     current_level: Res<CurrentLevel>,
-    keys: Res<Input<KeyCode>>,
 ) {
-
-    if keys.just_pressed(KeyCode::P) {
-        println!("{:?}", map.0);
-    }
-
-
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
         let server_message: ServerMessageUnreliable = bincode::deserialize(&message).unwrap();
 
@@ -152,10 +144,6 @@ fn client_update_system(
     }
 
     for (entity, playerid, mut transform) in players.iter_mut() {
-
-        if keys.just_pressed(KeyCode::O) {
-            println!("entities: {}", playerid.id);
-        }
 
         if let Some((pos, level)) = map.0.get(&playerid.id)  {
 

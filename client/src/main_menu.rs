@@ -107,9 +107,6 @@ pub fn menu_click_system (
                                 commands.insert_resource(MultiplayerSetting(HostClient::Host));
                                 let rt = tokio::runtime::Runtime::new().unwrap();
                                 let public_ip = rt.block_on(public_ip::addr()).unwrap();
-                                // it works on local ip idk why it doesn't work on public ip
-                                // could be something to do with port forwarding / windows firewall
-                                // let public_ip = local_ip().unwrap();
 
                                 commands.insert_resource(new_renet_client(0, public_ip));
                                 commands.insert_resource(new_renet_server(public_ip));

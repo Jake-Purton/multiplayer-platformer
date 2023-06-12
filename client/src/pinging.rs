@@ -98,11 +98,14 @@ fn listen_for_pong (
                 println!("ping time: {}ms", ping.as_millis());
                 game_state.set(GameState::Gameplay)
             },
+            ServerMessageReliable::DebugMessage(string) => println!("recieved debug message (pinging.rs) {}", string),
             _ => (),
         }
     }
 
-    while let Some(_) = client.receive_message(DefaultChannel::Unreliable) {
+    while client.receive_message(DefaultChannel::Unreliable).is_some() {
+
+        // draining the messages so they don't build up
 
     }
 
