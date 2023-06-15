@@ -1,11 +1,11 @@
-use crate::{moving_block::MovableWall, PLAYER_RUN_SPEED, PLAYER_JUMP_VELOCITY, FELLA_SPRITE_SIZE};
+use crate::{moving_block::MovableWall, PLAYER_RUN_SPEED, PLAYER_JUMP_VELOCITY, FELLA_SPRITE_SIZE, MultiplayerSetting, main_menu::HostClient};
 use std::{fs::File, io::Read};
 use bevy_rapier2d::prelude::*;
 use bevy::{prelude::*, sprite::collide_aabb::collide};
 
 
 use crate::{
-    player::Player, MAP_SCALE, GameState, startup_plugin::GameTextures, CurrentLevel, level_directory,
+    player::Player, MAP_SCALE, GameState, startup_plugin::GameTextures, CurrentLevel,
 };
 
 #[derive(Component)]
@@ -30,6 +30,14 @@ impl Plugin for PlatformPlugin {
         app
             .add_system(platform_from_map_system.in_schedule(OnEnter(GameState::Gameplay)))
             .add_system(next_level_system.in_set(OnUpdate(GameState::Gameplay)));
+    }
+}
+
+pub fn level_directory(level_number: u8, hc: &HostClient) -> String {
+    match hc {
+        HostClient::Client => format!("assets/levels/downloads/level-{}.txt", level_number),
+        HostClient::Host => format!("assets/levels/multiplayer/level-{}.txt", level_number),
+        HostClient::Play => format!("assets/levels/level-{}.txt", level_number),
     }
 }
 
@@ -145,9 +153,9 @@ fn platform_from_map_system(
     mut commands: Commands, 
     game_textures: Res<GameTextures>,
     current_level: Res<CurrentLevel>,
+    multiplayer: Res<MultiplayerSetting>
 ) {
-
-    let mut file = File::open(level_directory(current_level.level_number)).unwrap();
+    let mut file = File::open(level_directory(current_level.level_number, &multiplayer.0)).unwrap();
 
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
