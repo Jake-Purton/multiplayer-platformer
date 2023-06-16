@@ -18,17 +18,33 @@ struct PingTime {
     time: SystemTime,
 }
 
+
+enum PingStage {
+    Pinging,
+    RequestingMaps,
+}
+
+#[derive(Resource)]
+struct PingThing(PingStage);
+
 pub struct PingPlugin;
 
 impl Plugin for PingPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app
+            .insert_resource(PingThing(PingStage::Pinging))
             .add_system(setup_pinging.in_schedule(OnEnter(GameState::CheckingConnection)))
-            .add_system(listen_for_pong.in_set(OnUpdate(GameState::CheckingConnection)))
-            .add_system(pinging_text.in_set(OnUpdate(GameState::CheckingConnection)))
+            .add_system(listen_for_pong.in_set(OnUpdate(GameState::CheckingConnection)).run_if(run_if_pinging))
+            .add_system(pinging_text.in_set(OnUpdate(GameState::CheckingConnection)).run_if(run_if_pinging))
             .add_system(despawn_everything.in_schedule(OnExit(GameState::CheckingConnection)));
             
     }
+}
+
+fn run_if_pinging (
+    p: Res<PingThing>
+) -> bool {
+    matches!(p.0, PingStage::Pinging)
 }
 
 fn setup_pinging (
@@ -37,6 +53,7 @@ fn setup_pinging (
     mut commands: Commands,
 ) {
 
+    commands.insert_resource(PingThing(PingStage::Pinging));
     commands.spawn(Camera2dBundle::default());
 
     let message = ClientMessageReliable::Ping;
@@ -85,8 +102,8 @@ fn pinging_text (
 
 fn listen_for_pong (
     mut client: ResMut<RenetClient>,
-    mut game_state: ResMut<NextState<GameState>>,
     ping_time: Res<PingTime>,
+    mut commands: Commands,
 ) {
 
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
@@ -96,7 +113,9 @@ fn listen_for_pong (
             ServerMessageReliable::Pong => {
                 let ping = SystemTime::now().duration_since(ping_time.time).unwrap();
                 println!("ping time: {}ms", ping.as_millis());
-                game_state.set(GameState::Gameplay)
+                
+                println!("setting pingthing to request maps");
+                commands.insert_resource(PingThing(PingStage::RequestingMaps))
             },
             ServerMessageReliable::DebugMessage(string) => println!("recieved debug message (pinging.rs) {}", string),
             _ => (),
