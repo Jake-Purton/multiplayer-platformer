@@ -1,4 +1,5 @@
 use bevy::{prelude::*, app::AppExit, window::PrimaryWindow};
+use local_ip_address::linux::local_ip;
 
 use crate::{GameState, startup_plugin::despawn_everything, MultiplayerSetting, client::new_renet_client, server::new_renet_server};
 
@@ -105,11 +106,18 @@ pub fn menu_click_system (
                                 println!("host");
 
                                 commands.insert_resource(MultiplayerSetting(HostClient::Host));
-                                let rt = tokio::runtime::Runtime::new().unwrap();
-                                let public_ip = rt.block_on(public_ip::addr()).unwrap();
 
-                                commands.insert_resource(new_renet_client(0, public_ip));
-                                commands.insert_resource(new_renet_server(public_ip));
+                                // public ip
+                                // let rt = tokio::runtime::Runtime::new().unwrap();
+                                // let public_ip = rt.block_on(public_ip::addr()).unwrap();
+                                // commands.insert_resource(new_renet_client(0, public_ip));
+                                // commands.insert_resource(new_renet_server(public_ip));
+
+                                // local ip
+                                let local_ip = local_ip().unwrap();
+                                commands.insert_resource(new_renet_client(0, local_ip));
+                                commands.insert_resource(new_renet_server(local_ip));
+
                                 game_state.set(GameState::Gameplay);
                             },
                             EXIT => exit.send(AppExit),
