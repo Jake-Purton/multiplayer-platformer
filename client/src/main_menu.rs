@@ -1,5 +1,5 @@
 use bevy::{prelude::*, app::AppExit, window::PrimaryWindow};
-use local_ip_address::linux::local_ip;
+use local_ip_address::local_ip;
 
 use crate::{GameState, startup_plugin::despawn_everything, MultiplayerSetting, client::new_renet_client, server::new_renet_server};
 

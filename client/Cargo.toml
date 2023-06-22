@@ -19,6 +19,14 @@ bevy-inspector-egui = "0.18"
 public-ip = "0.2.2"
 tokio = { version = "1", features = ["full"] }
 
+[target.x86_64-pc-windows-msvc]
+linker = "lld"
+rustflags = [
+  "-Lnative=/home/me/.xwin/crt/lib/x86_64",
+  "-Lnative=/home/me/.xwin/sdk/lib/um/x86_64",
+  "-Lnative=/home/me/.xwin/sdk/lib/ucrt/x86_64"
+]
+
 [build-dependencies]
 embed-resource = "1.6.3"
 
