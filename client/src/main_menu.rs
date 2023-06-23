@@ -104,7 +104,33 @@ pub fn menu_click_system (
 
                         match section.value.trim() {
 
-                            PLAY => game_state.set(GameState::Gameplay),
+                            PLAY => {
+                                let mut cl = current_level.level_number;
+                                let mut maps: Vec<Vec<Vec<u8>>> = Vec::new();
+
+                                while let Ok(mut file) = File::open(level_directory(cl, &HostClient::Play)) {
+                                    let mut contents = String::new();
+                                    file.read_to_string(&mut contents).unwrap();
+
+                                    let mut map: Vec<Vec<u8>> = Vec::new();
+
+                                    for line in contents.lines() {
+                                        map.push(
+                                            line.split_whitespace()
+                                                .map(|a| a.parse::<u8>().unwrap())
+                                                .collect(),
+                                        );
+                                    }
+
+                                    map.reverse();
+                                    maps.push(map);
+                                    cl += 1;
+                                }
+
+                                commands.insert_resource(Maps { maps });
+
+                                game_state.set(GameState::Gameplay)
+                            },
                             HOST => {
                                 println!("host");
 
