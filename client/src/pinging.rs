@@ -34,17 +34,11 @@ impl Plugin for PingPlugin {
         app
             .insert_resource(PingThing(PingStage::Pinging))
             .add_system(setup_pinging.in_schedule(OnEnter(GameState::CheckingConnection)))
-            .add_system(listen_for_pong.in_set(OnUpdate(GameState::CheckingConnection)).run_if(run_if_pinging))
-            .add_system(pinging_text.in_set(OnUpdate(GameState::CheckingConnection)).run_if(run_if_pinging))
+            .add_system(listen_for_pong.in_set(OnUpdate(GameState::CheckingConnection)))
+            .add_system(pinging_text.in_set(OnUpdate(GameState::CheckingConnection)))
             .add_system(despawn_everything.in_schedule(OnExit(GameState::CheckingConnection)));
             
     }
-}
-
-fn run_if_pinging (
-    p: Res<PingThing>
-) -> bool {
-    matches!(p.0, PingStage::Pinging)
 }
 
 fn setup_pinging (

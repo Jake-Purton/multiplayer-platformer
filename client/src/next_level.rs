@@ -1,8 +1,6 @@
-use std::fs::File;
-
 use bevy::prelude::*;
 
-use crate::{GameState, CurrentLevel, MultiplayerSetting, main_menu::HostClient, client::UserIdMap, platform::level_directory};
+use crate::{GameState, CurrentLevel, MultiplayerSetting, main_menu::HostClient, client::UserIdMap, platform::Maps};
 
 #[derive(Resource)]
 pub struct LevelTimer {
@@ -50,7 +48,7 @@ fn back_to_gameplay (
     entities: Query<Entity, Without<Window>>,
     mut commands: Commands,
     current_level: Res<CurrentLevel>,
-    multi: Res<MultiplayerSetting>,
+    maps: Res<Maps>
 ) {
 
     timer.timer.tick(time.delta());
@@ -62,16 +60,12 @@ fn back_to_gameplay (
             commands.entity(entity).despawn()
         }
 
-        match File::open(level_directory(current_level.level_number, &multi.0)) {
-            Ok(_) => {
-                game_state.set(GameState::Gameplay)
-            },
-            Err(_) => {
-                game_state.set(GameState::Win)
-            },
+        // if the level it's trying to access is in the list
+        if current_level.level_number as usize > maps.maps.len() {
+            game_state.set(GameState::Win)
+        } else {
+            game_state.set(GameState::Gameplay)
         }
-        
-
     }
 
 }

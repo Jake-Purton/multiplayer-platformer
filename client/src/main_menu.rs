@@ -1,7 +1,9 @@
+use std::{fs::File, io::Read};
+
 use bevy::{prelude::*, app::AppExit, window::PrimaryWindow};
 use local_ip_address::local_ip;
 
-use crate::{GameState, startup_plugin::despawn_everything, MultiplayerSetting, client::new_renet_client, server::new_renet_server};
+use crate::{GameState, startup_plugin::despawn_everything, MultiplayerSetting, client::new_renet_client, server::new_renet_server, platform::{level_directory, Maps}, CurrentLevel};
 
 pub struct MenuPlugin;
 
@@ -82,6 +84,7 @@ pub fn menu_click_system (
     mut game_state: ResMut<NextState<GameState>>,
     mut exit: EventWriter<AppExit>,
     mut commands: Commands,
+    current_level: Res<CurrentLevel>,
 ) {
     let window = windows.get_single().unwrap();
     
@@ -118,6 +121,32 @@ pub fn menu_click_system (
                                 commands.insert_resource(new_renet_client(0, local_ip));
                                 commands.insert_resource(new_renet_server(local_ip));
 
+                                // load maps into ram so that they can be sent and used
+                                // load the maps as hashmaps where the key is "level-<level_number>" and the value is the string
+
+                                let mut cl = current_level.level_number;
+                                let mut maps: Vec<Vec<Vec<u8>>> = Vec::new();
+
+                                while let Ok(mut file) = File::open(level_directory(cl, &HostClient::Host)) {
+                                    let mut contents = String::new();
+                                    file.read_to_string(&mut contents).unwrap();
+
+                                    let mut map: Vec<Vec<u8>> = Vec::new();
+
+                                    for line in contents.lines() {
+                                        map.push(
+                                            line.split_whitespace()
+                                                .map(|a| a.parse::<u8>().unwrap())
+                                                .collect(),
+                                        );
+                                    }
+
+                                    map.reverse();
+                                    maps.push(map);
+                                    cl += 1;
+                                }
+                                
+                                commands.insert_resource(Maps { maps });
                                 game_state.set(GameState::Gameplay);
                             },
                             EXIT => exit.send(AppExit),

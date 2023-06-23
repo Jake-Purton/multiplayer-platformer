@@ -1,5 +1,4 @@
-use crate::{moving_block::MovableWall, PLAYER_RUN_SPEED, PLAYER_JUMP_VELOCITY, FELLA_SPRITE_SIZE, MultiplayerSetting, main_menu::HostClient};
-use std::{fs::File, io::Read};
+use crate::{moving_block::MovableWall, PLAYER_RUN_SPEED, PLAYER_JUMP_VELOCITY, FELLA_SPRITE_SIZE, main_menu::HostClient};
 use bevy_rapier2d::prelude::*;
 use bevy::{prelude::*, sprite::collide_aabb::collide};
 
@@ -149,28 +148,21 @@ pub struct LowestPoint {
     pub point: f32,
 }
 
+#[derive(Resource)]
+pub struct Maps {
+    // a vector of all of the maps
+    pub maps: Vec<Vec<Vec<u8>>>,
+}
+
 fn platform_from_map_system(
     mut commands: Commands, 
     game_textures: Res<GameTextures>,
     current_level: Res<CurrentLevel>,
-    multiplayer: Res<MultiplayerSetting>
+    maps: Res<Maps>,
 ) {
-    let mut file = File::open(level_directory(current_level.level_number, &multiplayer.0)).unwrap();
+    
+    let map = maps.maps[current_level.level_number as usize - 1].clone();
 
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
-
-    let mut map: Vec<Vec<u8>> = Vec::new();
-
-    for line in contents.lines() {
-        map.push(
-            line.split_whitespace()
-                .map(|a| a.parse::<u8>().unwrap())
-                .collect(),
-        );
-    }
-
-    map.reverse();
     commands.insert_resource(LowestPoint{ point: (map.len() as f32 * MAP_SCALE / 2.0) + MAP_SCALE + 100.0 });
 
     for (y, array) in map.iter().enumerate() {
