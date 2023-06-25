@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_renet::{renet::{RenetError, RenetServer, DefaultChannel, RenetConnectionConfig, ServerConfig, ServerAuthentication, ServerEvent}, RenetServerPlugin};
 use local_ip_address::local_ip;
 
-use crate::{client::PROTOCOL_ID, main_menu::HostClient, MultiplayerSetting, messages::{ServerMessageUnreliable, ServerMessageReliable, ClientMessageUnreliable, ClientMessageReliable}};
+use crate::{client::PROTOCOL_ID, main_menu::HostClient, MultiplayerSetting, messages::{ServerMessageUnreliable, ServerMessageReliable, ClientMessageUnreliable, ClientMessageReliable}, platform::Maps};
 
 // this version of the server bounces the messages but doesn't send them to itself
 // would also like to send messages when a user disconnects for the player to be despawned.
@@ -55,6 +55,7 @@ fn panic_on_error_system(mut renet_error: EventReader<RenetError>) {
 
 fn server_update_system(
     mut server: ResMut<RenetServer>,
+    maps: Res<Maps>
 ) {
 
     for client_id in server.clients_id().into_iter() {
@@ -80,7 +81,11 @@ fn server_update_system(
                 ClientMessageReliable::Ping => {
                     println!("ping recieved from {}", client_id);
                     let message = ServerMessageReliable::Pong;
-                    server.send_message(client_id, DefaultChannel::Reliable, bincode::serialize(&message).unwrap())
+                    server.send_message(client_id, DefaultChannel::Reliable, bincode::serialize(&message).unwrap());
+
+                    let message = ServerMessageReliable::NumberOfMaps(maps.maps.len() as u16);
+                    server.send_message(client_id, DefaultChannel::Reliable, bincode::serialize(&message).unwrap());
+
                 },
             }
         }

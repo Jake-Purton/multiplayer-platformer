@@ -25,6 +25,9 @@ enum PingStage {
 }
 
 #[derive(Resource)]
+struct NumberOfMaps(Option<u16>);
+
+#[derive(Resource)]
 struct PingThing(PingStage);
 
 pub struct PingPlugin;
@@ -74,18 +77,42 @@ fn pinging_text (
     mut game_state: ResMut<NextState<GameState>>,
     time: Res<PingTime>,  
     mut commands: Commands, 
+    ping_thing: Res<PingThing>,
 ) {
     let time = SystemTime::now().duration_since(time.time).unwrap();
-    let mut pinging = "Pinging".to_string();
-    let dots = time.as_millis() / 300 % 4;
 
-    if time.as_millis() >= TIMEOUT_DURATION {
-        println!("Ping timed out, returning to menu");
-        game_state.set(GameState::Menu);
-        commands.insert_resource(MultiplayerSetting ( HostClient::Play ));
-        commands.remove_resource::<RenetClient>();
+    let mut pinging = "".to_string();
+
+    match ping_thing.0 {
+        PingStage::Pinging => {
+
+            pinging.push_str("Pinging");
+
+            if time.as_millis() >= TIMEOUT_DURATION {
+                println!("Ping timed out, returning to menu");
+                game_state.set(GameState::Menu);
+                commands.insert_resource(MultiplayerSetting ( HostClient::Play ));
+                commands.remove_resource::<RenetClient>();
+            }
+        
+        },
+        PingStage::RequestingMaps => {
+            pinging.push_str("Getting maps");
+
+            // adds 20 seconds to the timer
+            if time.as_millis() >= TIMEOUT_DURATION + 20000 {
+                println!("Ping timed out, returning to menu");
+                game_state.set(GameState::Menu);
+                commands.insert_resource(MultiplayerSetting ( HostClient::Play ));
+                commands.remove_resource::<RenetClient>();
+            }
+        
+        },
     }
 
+    let dots = time.as_millis() / 300 % 4;
+
+    
     for mut text in &mut text {
         for _ in 0..dots {
             pinging.push('.')
@@ -110,15 +137,20 @@ fn listen_for_pong (
                 
                 println!("setting pingthing to request maps");
                 commands.insert_resource(PingThing(PingStage::RequestingMaps))
+
+                
             },
             ServerMessageReliable::DebugMessage(string) => println!("recieved debug message (pinging.rs) {}", string),
+            ServerMessageReliable::NumberOfMaps(total) => {
+                commands.insert_resource(NumberOfMaps(Some(total)))
+            },
             _ => (),
         }
     }
 
     while client.receive_message(DefaultChannel::Unreliable).is_some() {
 
-        // draining the messages so they don't build up
+        // if number of maps is some - then look for maps ig
 
     }
 

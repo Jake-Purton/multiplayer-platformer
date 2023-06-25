@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ServerMessageUnreliable {
     PlayerPosition {id: u64, position: Vec3, level: u8},
+    Map(Vec<Vec<u8>>),
+
 }
 
 #[derive(Debug, Serialize, Deserialize, Component)]
@@ -14,6 +16,7 @@ pub enum ServerMessageReliable {
     PlayerConnected { id: u64 },
     PlayerDisconnected { id: u64 },
     DebugMessage(String),
+    NumberOfMaps(u16),
     Pong,
 }
 
