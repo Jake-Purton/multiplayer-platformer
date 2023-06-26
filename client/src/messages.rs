@@ -7,7 +7,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ServerMessageUnreliable {
     PlayerPosition {id: u64, position: Vec3, level: u8},
-    Map(Vec<Vec<u8>>),
+    Map{
+        map: Vec<Vec<u8>>,
+        number: u8,
+    },
 
 }
 

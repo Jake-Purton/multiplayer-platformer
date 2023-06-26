@@ -86,6 +86,12 @@ fn server_update_system(
                     let message = ServerMessageReliable::NumberOfMaps(maps.maps.len() as u16);
                     server.send_message(client_id, DefaultChannel::Reliable, bincode::serialize(&message).unwrap());
 
+                    for (i, a) in &maps.maps {
+                        let message = ServerMessageUnreliable::Map{ map: a.clone(), number: *i };
+                        server.send_message(client_id, DefaultChannel::Unreliable, bincode::serialize(&message).unwrap());
+
+                    }
+
                 },
             }
         }

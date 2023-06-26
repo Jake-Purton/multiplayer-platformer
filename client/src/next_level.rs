@@ -61,7 +61,7 @@ fn back_to_gameplay (
         }
 
         // if the level it's trying to access is in the list
-        if current_level.level_number as usize > maps.maps.len() {
+        if maps.maps.get(&current_level.level_number).is_none() {
             game_state.set(GameState::Win)
         } else {
             game_state.set(GameState::Gameplay)

@@ -11,7 +11,7 @@ use bevy_renet::{
 // how long to wait while pinging (miliseconds)
 const TIMEOUT_DURATION: u128 = 5000;
 
-use crate::{GameState, messages::{ClientMessageReliable, ServerMessageReliable}, main_menu::{Menu, HostClient}, startup_plugin::despawn_everything, MultiplayerSetting};
+use crate::{GameState, messages::{ClientMessageReliable, ServerMessageReliable, ServerMessageUnreliable}, main_menu::{Menu, HostClient}, startup_plugin::despawn_everything, MultiplayerSetting, platform::Maps};
 
 #[derive(Resource)]
 struct PingTime {
@@ -36,6 +36,7 @@ impl Plugin for PingPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app
             .insert_resource(PingThing(PingStage::Pinging))
+            .insert_resource(NumberOfMaps(None))
             .add_system(setup_pinging.in_schedule(OnEnter(GameState::CheckingConnection)))
             .add_system(listen_for_pong.in_set(OnUpdate(GameState::CheckingConnection)))
             .add_system(pinging_text.in_set(OnUpdate(GameState::CheckingConnection)))
@@ -125,6 +126,9 @@ fn listen_for_pong (
     mut client: ResMut<RenetClient>,
     ping_time: Res<PingTime>,
     mut commands: Commands,
+    mut num_maps: ResMut<NumberOfMaps>,
+    mut game_state: ResMut<NextState<GameState>>,
+    mut maps: ResMut<Maps>,
 ) {
 
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
@@ -142,16 +146,33 @@ fn listen_for_pong (
             },
             ServerMessageReliable::DebugMessage(string) => println!("recieved debug message (pinging.rs) {}", string),
             ServerMessageReliable::NumberOfMaps(total) => {
-                commands.insert_resource(NumberOfMaps(Some(total)))
+                num_maps.0 = Some(total)
             },
             _ => (),
         }
     }
 
-    while client.receive_message(DefaultChannel::Unreliable).is_some() {
+    while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
+        
+        let server_message: ServerMessageUnreliable = bincode::deserialize(&message).unwrap();
 
-        // if number of maps is some - then look for maps ig
+        match server_message {
+            ServerMessageUnreliable::PlayerPosition { id: _, position: _, level: _ } => (),
+            ServerMessageUnreliable::Map { map, number } => {
 
+                if let Some(num) = num_maps.0 {
+                    println!("Just got sent map number {}", number);
+    
+                    maps.maps.insert(number, map);
+                    
+                    // make it re-request maps after a while (sent on the unreliable channel)
+
+                    if maps.maps.len() == num as usize {
+                        println!("got all the maps, gaming commences");
+                        game_state.set(GameState::Gameplay);
+                    }
+                }
+            },
+        }
     }
-
 }

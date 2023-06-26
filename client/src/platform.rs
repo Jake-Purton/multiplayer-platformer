@@ -1,6 +1,6 @@
 use crate::{moving_block::MovableWall, PLAYER_RUN_SPEED, PLAYER_JUMP_VELOCITY, FELLA_SPRITE_SIZE, main_menu::HostClient};
 use bevy_rapier2d::prelude::*;
-use bevy::{prelude::*, sprite::collide_aabb::collide};
+use bevy::{prelude::*, sprite::collide_aabb::collide, utils::HashMap};
 
 
 use crate::{
@@ -27,6 +27,7 @@ pub struct PlatformPlugin;
 impl Plugin for PlatformPlugin {
     fn build(&self, app: &mut App) {
         app
+            .insert_resource(Maps { maps: HashMap::new() })
             .add_system(platform_from_map_system.in_schedule(OnEnter(GameState::Gameplay)))
             .add_system(next_level_system.in_set(OnUpdate(GameState::Gameplay)));
     }
@@ -151,7 +152,7 @@ pub struct LowestPoint {
 #[derive(Resource)]
 pub struct Maps {
     // a vector of all of the maps
-    pub maps: Vec<Vec<Vec<u8>>>,
+    pub maps: HashMap<u8, Vec<Vec<u8>>>,
 }
 
 fn platform_from_map_system(
@@ -161,7 +162,7 @@ fn platform_from_map_system(
     maps: Res<Maps>,
 ) {
     
-    let map = maps.maps[current_level.level_number as usize - 1].clone();
+    let map = maps.maps.get(&(current_level.level_number)).unwrap().clone();
 
     commands.insert_resource(LowestPoint{ point: (map.len() as f32 * MAP_SCALE / 2.0) + MAP_SCALE + 100.0 });
 

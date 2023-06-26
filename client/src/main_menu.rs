@@ -83,6 +83,7 @@ pub fn menu_click_system (
     mut game_state: ResMut<NextState<GameState>>,
     mut exit: EventWriter<AppExit>,
     mut commands: Commands,
+    mut maps: ResMut<Maps>
 ) {
     let window = windows.get_single().unwrap();
     
@@ -104,7 +105,6 @@ pub fn menu_click_system (
 
                             PLAY => {
                                 let mut cl = 1;
-                                let mut maps: Vec<Vec<Vec<u8>>> = Vec::new();
 
                                 while let Ok(mut file) = File::open(level_directory(cl, &HostClient::Play)) {
                                     let mut contents = String::new();
@@ -121,11 +121,12 @@ pub fn menu_click_system (
                                     }
 
                                     map.reverse();
-                                    maps.push(map);
+
+                                    maps.maps.insert(cl, map);
+
                                     cl += 1;
                                 }
 
-                                commands.insert_resource(Maps { maps });
 
                                 game_state.set(GameState::Gameplay)
                             },
@@ -146,7 +147,6 @@ pub fn menu_click_system (
                                 // commands.insert_resource(new_renet_server(local_ip));
 
                                 let mut cl = 1;
-                                let mut maps: Vec<Vec<Vec<u8>>> = Vec::new();
 
                                 while let Ok(mut file) = File::open(level_directory(cl, &HostClient::Host)) {
                                     let mut contents = String::new();
@@ -163,11 +163,13 @@ pub fn menu_click_system (
                                     }
 
                                     map.reverse();
-                                    maps.push(map);
+                                    maps.maps.insert(cl, map);
+
+                                    println!("{:?}", maps.maps.keys());
+
                                     cl += 1;
                                 }
                                 
-                                commands.insert_resource(Maps { maps });
                                 game_state.set(GameState::Gameplay);
                             },
                             EXIT => exit.send(AppExit),

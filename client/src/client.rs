@@ -140,7 +140,7 @@ fn client_update_system(
                 }
 
             },
-            ServerMessageUnreliable::Map(_) => println!("server just sent me a map even though im gaming rn"),
+            ServerMessageUnreliable::Map{map: _, number: _} => println!("server just sent me a map even though im gaming rn"),
         }
     }
 
