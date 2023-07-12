@@ -1,5 +1,3 @@
-client/target
-client/dist
-server/target
-server/dist
-client/docs/create_docks.sh
+target
+dist
+docs/create_docks.sh
