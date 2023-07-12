@@ -1,7 +1,11 @@
-use bevy_kira_audio::{prelude::*, Audio};
+use crate::{
+    moving_block::MovableWall,
+    player::{rapier_player_movement, Player},
+    GameState, GRAVITY_CONSTANT,
+};
 use bevy::{prelude::*, window::PrimaryWindow};
-use bevy_rapier2d::{prelude::{RapierConfiguration, Velocity, RigidBody}};
-use crate::{GameState, player::{rapier_player_movement, Player}, GRAVITY_CONSTANT, moving_block::MovableWall};
+use bevy_kira_audio::{prelude::*, Audio};
+use bevy_rapier2d::prelude::{RapierConfiguration, RigidBody, Velocity};
 
 #[derive(Resource)]
 pub struct GameTextures {
@@ -22,10 +26,13 @@ pub struct StartupPlugin;
 
 impl Plugin for StartupPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app
-            .add_startup_system(pre_startup.in_base_set(StartupSet::PreStartup))     
+        app.add_startup_system(pre_startup.in_base_set(StartupSet::PreStartup))
             .add_system(setup.in_schedule(OnEnter(GameState::Gameplay)))
-            .add_system(camera_follow_player.after(rapier_player_movement).in_set(OnUpdate(GameState::Gameplay)))
+            .add_system(
+                camera_follow_player
+                    .after(rapier_player_movement)
+                    .in_set(OnUpdate(GameState::Gameplay)),
+            )
             .add_system(spinny_cube.in_set(OnUpdate(GameState::Gameplay)))
             .add_system(despawn_everything.in_schedule(OnExit(GameState::Gameplay)))
             .add_system(toggle_mute);
@@ -33,8 +40,8 @@ impl Plugin for StartupPlugin {
 }
 
 fn pre_startup(
-    mut commands: Commands, 
-    asset_server: Res<AssetServer>, 
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
     audio: Res<Audio>,
     mut rapier_config: ResMut<RapierConfiguration>,
 ) {
@@ -46,7 +53,7 @@ fn pre_startup(
         exit: asset_server.load("death-messages/exit.png"),
         play: asset_server.load("death-messages/play.png"),
         hook: asset_server.load("images/hook.png"),
-        online: asset_server.load("death-messages/online.png")
+        online: asset_server.load("death-messages/online.png"),
     });
 
     let music = asset_server.load("music/new_bossa.wav");
@@ -68,8 +75,7 @@ fn setup(mut commands: Commands) {
         .insert(RigidBody::Dynamic);
 }
 
-fn toggle_mute (audio: Res<Audio>, keys: Res<Input<KeyCode>>) {
-
+fn toggle_mute(audio: Res<Audio>, keys: Res<Input<KeyCode>>) {
     if keys.just_pressed(KeyCode::M) {
         if audio.is_playing_sound() {
             audio.pause();
@@ -88,11 +94,13 @@ fn camera_follow_player(
 
     let velocity = (player.translation - camera.translation).truncate() * 2.0;
     vel.linvel = (velocity + vel.linvel) * 0.7;
-
 }
 
-pub fn despawn_everything(query: Query<Entity, (Without<PrimaryWindow>, Without<PlayerCamera>)>, mut commands: Commands, camera: Query<Entity, With<PlayerCamera>>) {
-
+pub fn despawn_everything(
+    query: Query<Entity, (Without<PrimaryWindow>, Without<PlayerCamera>)>,
+    mut commands: Commands,
+    camera: Query<Entity, With<PlayerCamera>>,
+) {
     for entity in query.iter() {
         commands.entity(entity).despawn();
     }
@@ -102,16 +110,11 @@ pub fn despawn_everything(query: Query<Entity, (Without<PrimaryWindow>, Without<
     }
 }
 
-fn spinny_cube (
-    mut cubes: Query<(&Velocity, &mut Sprite), With<MovableWall>>,
-) {
-
+fn spinny_cube(mut cubes: Query<(&Velocity, &mut Sprite), With<MovableWall>>) {
     for (vel, mut cube) in cubes.iter_mut() {
         if vel.angvel.abs() > 1.0 {
-
             let x = vel.angvel / vel.angvel.abs();
-            cube.color += Color::rgba(0.02 *  x, -0.02 * x, 0.01 * x, 0.0);
-
+            cube.color += Color::rgba(0.02 * x, -0.02 * x, 0.01 * x, 0.0);
         }
     }
 }

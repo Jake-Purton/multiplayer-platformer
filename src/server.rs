@@ -1,10 +1,28 @@
-use std::{net::{UdpSocket, SocketAddr, IpAddr}, time::SystemTime};
+use std::{
+    net::{IpAddr, SocketAddr, UdpSocket},
+    time::SystemTime,
+};
 
 use bevy::prelude::*;
-use bevy_renet::{renet::{RenetError, RenetServer, DefaultChannel, RenetConnectionConfig, ServerConfig, ServerAuthentication, ServerEvent}, RenetServerPlugin};
+use bevy_renet::{
+    renet::{
+        DefaultChannel, RenetConnectionConfig, RenetError, RenetServer, ServerAuthentication,
+        ServerConfig, ServerEvent,
+    },
+    RenetServerPlugin,
+};
 use local_ip_address::local_ip;
 
-use crate::{client::PROTOCOL_ID, main_menu::HostClient, MultiplayerSetting, messages::{ServerMessageUnreliable, ServerMessageReliable, ClientMessageUnreliable, ClientMessageReliable}, platform::Maps};
+use crate::{
+    client::PROTOCOL_ID,
+    main_menu::HostClient,
+    messages::{
+        ClientMessageReliable, ClientMessageUnreliable, ServerMessageReliable,
+        ServerMessageUnreliable,
+    },
+    platform::Maps,
+    MultiplayerSetting,
+};
 
 // this version of the server bounces the messages but doesn't send them to itself
 // would also like to send messages when a user disconnects for the player to be despawned.
@@ -16,31 +34,29 @@ pub struct MyServerPlugin;
 
 impl Plugin for MyServerPlugin {
     fn build(&self, app: &mut App) {
-
-        app
-            .add_plugin(RenetServerPlugin::default())
+        app.add_plugin(RenetServerPlugin::default())
             .add_system(panic_on_error_system.run_if(run_if_host))
             .add_system(server_update_system.run_if(run_if_host));
     }
 }
 
-fn run_if_host (
-    host: Res<MultiplayerSetting>
-) -> bool {
+fn run_if_host(host: Res<MultiplayerSetting>) -> bool {
     matches!(host.0, HostClient::Host)
 }
 
 pub fn new_renet_server(public_ip: IpAddr) -> RenetServer {
-    
     let inbound_server_addr = SocketAddr::new(local_ip().unwrap(), SERVER_PORT);
     let socket = UdpSocket::bind(inbound_server_addr).unwrap();
-    
+
     // Public hosting, requires port forwarding
     let server_addr = SocketAddr::new(public_ip, SERVER_PORT);
-        
+
     let connection_config = RenetConnectionConfig::default();
-    let server_config = ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);
-    let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+    let server_config =
+        ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);
+    let current_time = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap();
     RenetServer::new(current_time, server_config, connection_config, socket).unwrap()
 }
 
@@ -53,21 +69,24 @@ fn panic_on_error_system(mut renet_error: EventReader<RenetError>) {
     }
 }
 
-fn server_update_system(
-    mut server: ResMut<RenetServer>,
-    maps: Res<Maps>
-) {
-
+fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
     for client_id in server.clients_id().into_iter() {
         while let Some(message) = server.receive_message(client_id, DefaultChannel::Unreliable) {
             let client_message: ClientMessageUnreliable = bincode::deserialize(&message).unwrap();
 
             match client_message {
-                ClientMessageUnreliable::PlayerPosition {level, pos } => {
-                    let message = ServerMessageUnreliable::PlayerPosition { id: client_id, position: pos, level };
-                    server.broadcast_message_except(client_id, DefaultChannel::Unreliable, bincode::serialize(&message).unwrap())
-                },
-
+                ClientMessageUnreliable::PlayerPosition { level, pos } => {
+                    let message = ServerMessageUnreliable::PlayerPosition {
+                        id: client_id,
+                        position: pos,
+                        level,
+                    };
+                    server.broadcast_message_except(
+                        client_id,
+                        DefaultChannel::Unreliable,
+                        bincode::serialize(&message).unwrap(),
+                    )
+                }
             }
         }
 
@@ -77,37 +96,52 @@ fn server_update_system(
             match client_message {
                 ClientMessageReliable::DebugMessage(string) => {
                     println!("server recieved message: {}", string)
-                },
+                }
                 ClientMessageReliable::Ping => {
                     println!("ping recieved from {}", client_id);
                     let message = ServerMessageReliable::Pong;
-                    server.send_message(client_id, DefaultChannel::Reliable, bincode::serialize(&message).unwrap());
+                    server.send_message(
+                        client_id,
+                        DefaultChannel::Reliable,
+                        bincode::serialize(&message).unwrap(),
+                    );
 
                     let message = ServerMessageReliable::NumberOfMaps(maps.maps.len() as u16);
-                    server.send_message(client_id, DefaultChannel::Reliable, bincode::serialize(&message).unwrap());
+                    server.send_message(
+                        client_id,
+                        DefaultChannel::Reliable,
+                        bincode::serialize(&message).unwrap(),
+                    );
 
                     for (i, a) in &maps.maps {
-                        let message = ServerMessageUnreliable::Map{ map: a.clone(), number: *i };
-                        server.send_message(client_id, DefaultChannel::Unreliable, bincode::serialize(&message).unwrap());
-
+                        let message = ServerMessageUnreliable::Map {
+                            map: a.clone(),
+                            number: *i,
+                        };
+                        server.send_message(
+                            client_id,
+                            DefaultChannel::Unreliable,
+                            bincode::serialize(&message).unwrap(),
+                        );
                     }
-
-                },
+                }
             }
         }
     }
 
     while let Some(event) = server.get_event() {
         match event {
-            ServerEvent::ClientConnected ( client_id, _) => {
+            ServerEvent::ClientConnected(client_id, _) => {
                 println!("Client {client_id} connected");
             }
-            ServerEvent::ClientDisconnected( client_id ) => {
+            ServerEvent::ClientDisconnected(client_id) => {
                 println!("Client {client_id} disconnected: BECAUSE");
                 let message = ServerMessageReliable::PlayerDisconnected { id: client_id };
-                server.broadcast_message(DefaultChannel::Reliable, bincode::serialize(&message).unwrap())
-
+                server.broadcast_message(
+                    DefaultChannel::Reliable,
+                    bincode::serialize(&message).unwrap(),
+                )
             }
         }
     }
-}// player level change
+} // player level change

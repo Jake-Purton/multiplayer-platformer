@@ -1,12 +1,19 @@
-use std::{net::{SocketAddr, UdpSocket}, time::SystemTime};
+use std::{
+    net::{SocketAddr, UdpSocket},
+    time::SystemTime,
+};
 
 use bevy::prelude::*;
 
-use crate::{GameState, server::{SERVER_PORT, CLIENT_PORT}, client::PROTOCOL_ID, main_menu::{Menu, HostClient}, MultiplayerSetting, startup_plugin::despawn_everything};
+use crate::{
+    client::PROTOCOL_ID,
+    main_menu::{HostClient, Menu},
+    server::{CLIENT_PORT, SERVER_PORT},
+    startup_plugin::despawn_everything,
+    GameState, MultiplayerSetting,
+};
 
-use bevy_renet::renet::{
-        ClientAuthentication, RenetClient, RenetConnectionConfig,
-    };
+use bevy_renet::renet::{ClientAuthentication, RenetClient, RenetConnectionConfig};
 
 pub enum BindError {
     Client,
@@ -18,25 +25,19 @@ pub struct JoinMenuPlugin;
 
 impl Plugin for JoinMenuPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app
-            .insert_resource(IPString (String::new()))
+        app.insert_resource(IPString(String::new()))
             .add_system(setup_join_menu.in_schedule(OnEnter(GameState::JoinMenu)))
             .add_system(join_input_ip.in_set(OnUpdate(GameState::JoinMenu)))
             .add_system(update_text.in_set(OnUpdate(GameState::JoinMenu)))
             .add_system(despawn_everything.in_schedule(OnExit(GameState::JoinMenu)))
             .add_system(text_input.in_set(OnUpdate(GameState::JoinMenu)));
-            
     }
 }
 
 #[derive(Resource)]
-pub struct IPString (String);
+pub struct IPString(String);
 
-fn setup_join_menu (
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
-
+fn setup_join_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(ClearColor(Color::rgb(1.0, 0.5, 0.0)));
     commands.spawn(Camera2dBundle::default());
 
@@ -49,23 +50,17 @@ fn setup_join_menu (
                 color: Color::BLACK,
             },
         ),
-        Menu
+        Menu,
     ));
 }
 
-fn update_text (
-    ip_string: ResMut<IPString>,
-    mut text: Query<&mut Text, With<Menu>>,
-) {
+fn update_text(ip_string: ResMut<IPString>, mut text: Query<&mut Text, With<Menu>>) {
     for mut text in &mut text {
         text.sections[0].value = format!("Server IP: {}", ip_string.0.clone());
     }
 }
 
-fn text_input(
-    mut char_evr: EventReader<ReceivedCharacter>,
-    mut ip_string: ResMut<IPString>,
-) {
+fn text_input(mut char_evr: EventReader<ReceivedCharacter>, mut ip_string: ResMut<IPString>) {
     for ev in char_evr.iter() {
         let char = ev.char;
 
@@ -84,15 +79,13 @@ fn text_input(
     }
 }
 
-fn join_input_ip (
+fn join_input_ip(
     mut commands: Commands,
     ip: Res<IPString>,
     mut game_state: ResMut<NextState<GameState>>,
     keys: Res<Input<KeyCode>>,
 ) {
-
     if keys.just_pressed(KeyCode::Return) {
-
         let client = renet_client(ip.0.trim());
 
         match client {
@@ -100,41 +93,34 @@ fn join_input_ip (
                 commands.insert_resource(client);
                 commands.insert_resource(MultiplayerSetting(HostClient::Client));
                 game_state.set(GameState::CheckingConnection);
-            },
-            Err(a) => {
-                match a {
-                    BindError::Client => println!("client error"),
-                    BindError::Server => println!("server error"),
-                    BindError::Format => println!("format error"),
-                }
             }
+            Err(a) => match a {
+                BindError::Client => println!("client error"),
+                BindError::Server => println!("server error"),
+                BindError::Format => println!("format error"),
+            },
         }
     }
 }
 
 fn renet_client(ip: &str) -> Result<RenetClient, BindError> {
-
     let split: Vec<_> = ip.split('.').collect();
     if split.len() == 4 {
-
         let mut server_addr = ip.parse();
-        
-        if !split.contains(&":") {
-            
-            server_addr = format!("{}:{}", ip, SERVER_PORT).parse();
 
+        if !split.contains(&":") {
+            server_addr = format!("{}:{}", ip, SERVER_PORT).parse();
         }
 
         if let Ok(server_addr) = server_addr {
-
             for i in 0..16 {
-
                 let client_addr = SocketAddr::new("0.0.0.0".parse().unwrap(), CLIENT_PORT + i);
-            
+
                 if let Ok(socket) = UdpSocket::bind(client_addr) {
-            
                     let connection_config = RenetConnectionConfig::default();
-                    let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+                    let current_time = SystemTime::now()
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .unwrap();
                     let client_id = current_time.as_millis() as u64;
                     let authentication = ClientAuthentication::Unsecure {
                         client_id,
@@ -142,22 +128,22 @@ fn renet_client(ip: &str) -> Result<RenetClient, BindError> {
                         server_addr,
                         user_data: None,
                     };
-                
-                    return Ok(RenetClient::new(current_time, socket, connection_config, authentication).unwrap());
-            
+
+                    return Ok(RenetClient::new(
+                        current_time,
+                        socket,
+                        connection_config,
+                        authentication,
+                    )
+                    .unwrap());
                 }
             }
 
             Err(BindError::Client)
-
-
         } else {
-
             Err(BindError::Server)
-
         }
     } else {
         Err(BindError::Format)
     }
-
 }

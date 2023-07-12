@@ -1,30 +1,30 @@
 #![allow(clippy::type_complexity)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod client;
+mod death;
+mod grappling_hook;
+mod join_menu;
+mod main_menu;
+mod messages;
+mod moving_block;
+mod next_level;
+mod pinging;
 mod platform;
 mod player;
-mod death;
-mod startup_plugin;
-mod next_level;
-mod win;
-mod main_menu;
-mod moving_block;
-mod grappling_hook;
-mod client;
 mod server;
-mod messages;
-mod join_menu;
-mod pinging;
+mod startup_plugin;
+mod win;
 
 use std::f32::consts::FRAC_1_SQRT_2;
 
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
 use bevy_kira_audio::prelude::*;
+use bevy_rapier2d::prelude::*;
 use client::MyClientPlugin;
 use death::DeathPlugin;
 use grappling_hook::GrapplePlugin;
-use main_menu::{MenuPlugin, HostClient};
+use main_menu::{HostClient, MenuPlugin};
 use moving_block::MovingBlockPlugin;
 use next_level::NextLevelPlugin;
 use platform::PlatformPlugin;
@@ -61,12 +61,11 @@ pub enum GameState {
 pub struct MultiplayerSetting(HostClient);
 
 fn main() {
-
     App::new()
         .add_state::<GameState>()
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
         .add_plugins(DefaultPlugins)
-        .insert_resource(CurrentLevel {level_number: 1})
+        .insert_resource(CurrentLevel { level_number: 1 })
         .add_plugin(GrapplePlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(PlatformPlugin)
@@ -91,4 +90,3 @@ fn main() {
 pub struct CurrentLevel {
     level_number: u8,
 }
-

@@ -1,35 +1,36 @@
-use crate::{moving_block::MovableWall, PLAYER_RUN_SPEED, PLAYER_JUMP_VELOCITY, FELLA_SPRITE_SIZE, main_menu::HostClient};
-use bevy_rapier2d::prelude::*;
-use bevy::{prelude::*, sprite::collide_aabb::collide, utils::HashMap};
-
-
 use crate::{
-    player::Player, MAP_SCALE, GameState, startup_plugin::GameTextures, CurrentLevel,
+    main_menu::HostClient, moving_block::MovableWall, FELLA_SPRITE_SIZE, PLAYER_JUMP_VELOCITY,
+    PLAYER_RUN_SPEED,
 };
+use bevy::{prelude::*, sprite::collide_aabb::collide, utils::HashMap};
+use bevy_rapier2d::prelude::*;
+
+use crate::{player::Player, startup_plugin::GameTextures, CurrentLevel, GameState, MAP_SCALE};
 
 #[derive(Component)]
 pub struct KillerWall {
-    pub size: Vec2
+    pub size: Vec2,
 }
 
 #[derive(Component)]
 pub struct Wall {
-    pub size: Vec2
+    pub size: Vec2,
 }
 
 #[derive(Component)]
 pub struct Goal {
-    size: Vec2
+    size: Vec2,
 }
 
 pub struct PlatformPlugin;
 
 impl Plugin for PlatformPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .insert_resource(Maps { maps: HashMap::new() })
-            .add_system(platform_from_map_system.in_schedule(OnEnter(GameState::Gameplay)))
-            .add_system(next_level_system.in_set(OnUpdate(GameState::Gameplay)));
+        app.insert_resource(Maps {
+            maps: HashMap::new(),
+        })
+        .add_system(platform_from_map_system.in_schedule(OnEnter(GameState::Gameplay)))
+        .add_system(next_level_system.in_set(OnUpdate(GameState::Gameplay)));
     }
 }
 
@@ -55,9 +56,7 @@ macro_rules! create_wall {
             .insert(RigidBody::Fixed)
             .insert(TransformBundle::from(Transform::from_xyz($x, $y, 10.0)))
             .insert(Collider::cuboid($size.x / 2.0, $size.y / 2.0))
-            .insert(Wall {
-                size: $size
-            });
+            .insert(Wall { size: $size });
     }};
 }
 
@@ -80,11 +79,11 @@ macro_rules! create_level_end {
                 },
                 ..Default::default()
             })
-            .insert(Goal {size: $size})
+            .insert(Goal { size: $size })
             .insert(RigidBody::Fixed)
             .insert(TransformBundle::from(Transform::from_xyz($x, $y, 10.0)))
             .insert(Collider::cuboid($size.x / 2.0, $size.y / 2.0));
-    }}
+    }};
 }
 
 macro_rules! create_killer_wall {
@@ -106,9 +105,7 @@ macro_rules! create_killer_wall {
                 },
                 ..Default::default()
             })
-            .insert(KillerWall {
-                size: $size
-            })
+            .insert(KillerWall { size: $size })
             .insert(RigidBody::Fixed)
             .insert(TransformBundle::from(Transform::from_xyz($x, $y, 10.0)))
             .insert(Collider::cuboid($size.x / 2.0, $size.y / 2.0));
@@ -134,9 +131,7 @@ macro_rules! create_movable_wall {
                 },
                 ..Default::default()
             })
-            .insert(MovableWall{
-                size: $size
-            })
+            .insert(MovableWall { size: $size })
             .insert(RigidBody::Dynamic)
             .insert(TransformBundle::from(Transform::from_xyz($x, $y, 10.0)))
             .insert(Collider::cuboid($size.x / 2.0, $size.y / 2.0))
@@ -156,15 +151,20 @@ pub struct Maps {
 }
 
 fn platform_from_map_system(
-    mut commands: Commands, 
+    mut commands: Commands,
     game_textures: Res<GameTextures>,
     current_level: Res<CurrentLevel>,
     maps: Res<Maps>,
 ) {
-    
-    let map = maps.maps.get(&(current_level.level_number)).unwrap().clone();
+    let map = maps
+        .maps
+        .get(&(current_level.level_number))
+        .unwrap()
+        .clone();
 
-    commands.insert_resource(LowestPoint{ point: (map.len() as f32 * MAP_SCALE / 2.0) + MAP_SCALE + 100.0 });
+    commands.insert_resource(LowestPoint {
+        point: (map.len() as f32 * MAP_SCALE / 2.0) + MAP_SCALE + 100.0,
+    });
 
     for (y, array) in map.iter().enumerate() {
         for (x, val) in array.iter().enumerate() {
@@ -201,7 +201,10 @@ fn platform_from_map_system(
                         jump_velocity: PLAYER_JUMP_VELOCITY,
                         size: FELLA_SPRITE_SIZE,
                     })
-                    .insert(Collider::cuboid(FELLA_SPRITE_SIZE.x / 2.0, FELLA_SPRITE_SIZE.y / 2.0 ))
+                    .insert(Collider::cuboid(
+                        FELLA_SPRITE_SIZE.x / 2.0,
+                        FELLA_SPRITE_SIZE.y / 2.0,
+                    ))
                     .insert(KinematicCharacterController {
                         autostep: Some(CharacterAutostep {
                             max_height: CharacterLength::Absolute(0.5),
@@ -215,7 +218,6 @@ fn platform_from_map_system(
                     })
                     .insert(KinematicCharacterControllerOutput::default())
                     .insert(TransformBundle::from(Transform::from_xyz(x, y, 10.0)));
-
             } else if *val == 4 {
                 create_killer_wall!(
                     commands,
@@ -232,24 +234,24 @@ fn platform_from_map_system(
                 )
             }
         }
-    }    
+    }
 }
 
-fn next_level_system (
-    player: Query<(&Player, &Transform)>, 
-    goals: Query<(&Goal, &Transform)>, 
+fn next_level_system(
+    player: Query<(&Player, &Transform)>,
+    goals: Query<(&Goal, &Transform)>,
     mut level: ResMut<CurrentLevel>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
     let (player, player_transform) = player.single();
-    for (goal, goal_transform) in goals.iter(){
+    for (goal, goal_transform) in goals.iter() {
         if collide(
-            player_transform.translation, 
-            player.size, 
-            goal_transform.translation, 
-            goal.size + Vec2::ONE
+            player_transform.translation,
+            player.size,
+            goal_transform.translation,
+            goal.size + Vec2::ONE,
         )
-            .is_some()
+        .is_some()
         {
             level.level_number += 1;
             game_state.set(GameState::NextLevel)

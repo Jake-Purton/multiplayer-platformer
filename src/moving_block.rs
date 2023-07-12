@@ -1,16 +1,14 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide, window::PrimaryWindow};
 use bevy_rapier2d::prelude::Velocity;
 
-use crate::{GameState, startup_plugin::PlayerCamera};
+use crate::{startup_plugin::PlayerCamera, GameState};
 
 pub struct MovingBlockPlugin;
 
 impl Plugin for MovingBlockPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_system(movable_walls.in_set(OnUpdate(GameState::Gameplay)))
+        app.add_system(movable_walls.in_set(OnUpdate(GameState::Gameplay)))
             .add_system(moving_wall.in_set(OnUpdate(GameState::Gameplay)));
-            
     }
 }
 
@@ -21,7 +19,7 @@ impl Plugin for MovingBlockPlugin {
 
 #[derive(Component)]
 pub struct MovableWall {
-    pub size: Vec2
+    pub size: Vec2,
 }
 
 #[derive(Component)]
@@ -73,7 +71,6 @@ fn moving_wall(
             let pos = window.cursor_position().unwrap();
 
             for (mut vel, _, block_transform) in moving_walls.iter_mut() {
-
                 let pos = Vec3::new(
                     pos.x - (window.width() / 2.0) + camera.translation.x,
                     pos.y - (window.height() / 2.0) + camera.translation.y,
@@ -81,7 +78,7 @@ fn moving_wall(
                 );
                 let velocity = (pos - block_transform.translation).truncate();
                 vel.linvel = (velocity + vel.linvel) * 0.8;
-            }   
+            }
         } else {
             for (_, entity, _) in moving_walls.iter() {
                 commands.entity(entity).remove::<MovingWall>();
