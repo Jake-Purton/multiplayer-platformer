@@ -3,7 +3,6 @@
 
 mod client;
 mod death;
-mod grappling_hook;
 mod join_menu;
 mod main_menu;
 mod messages;
@@ -33,9 +32,6 @@ use win::WinPlugin;
 use crate::{join_menu::JoinMenuPlugin, pinging::PingPlugin};
 
 const SPRITE_SCALE: f32 = FRAC_1_SQRT_2;
-const HOOK_SPRITE_SIZE: Vec2 = Vec2::new(24.0, 24.0);
-const HOOK_SPEED: f32 = 2000.0;
-const GRAPPLE_SPEED: f32 = 200.0;
 const FELLA_SPRITE_SIZE: Vec2 = Vec2::new(64.0 * SPRITE_SCALE, 64.0 * SPRITE_SCALE);
 const GRAVITY_CONSTANT: Vec2 = Vec2::new(0.0, -1200.0);
 const PLAYER_JUMP_VELOCITY: f32 = 800.0;

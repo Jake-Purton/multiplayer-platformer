@@ -1,13 +1,10 @@
-use std::f32::consts::PI;
-
 use ::bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use bevy_rapier2d::prelude::{KinematicCharacterController, KinematicCharacterControllerOutput};
 
 use crate::{
-    grappling_hook::{Hook, MovingGrappleHook},
     platform::{KillerWall, LowestPoint},
-    GameState, GRAPPLE_SPEED, GRAVITY_CONSTANT,
+    GameState, GRAVITY_CONSTANT,
 };
 
 pub struct PlayerPlugin;
@@ -37,9 +34,8 @@ pub fn rapier_player_movement(
     )>,
     keys: Res<Input<KeyCode>>,
     time: Res<Time>,
-    grappling_hook: Query<(&Hook, &Transform), Without<MovingGrappleHook>>,
 ) {
-    for (mut controller, mut player, output, player_transform) in controllers.iter_mut() {
+    for (mut controller, mut player, output, _) in controllers.iter_mut() {
         let delta_s = time.delta_seconds();
 
         let mut movement = Vec2::new(0.0, 0.0);
@@ -79,43 +75,13 @@ pub fn rapier_player_movement(
 
         movement += player.velocity;
 
-        if grappling_hook.is_empty() {
-            controller.translation = Some(movement * delta_s);
+        controller.translation = Some(movement * delta_s);
 
-            if keys.just_pressed(KeyCode::F) {
-                println!("velocity: {}, movement: {} ", player.velocity, movement);
-            }
-        } else {
-            let (_, hook_transform) = grappling_hook.single();
-
-            let mut direction =
-                (hook_transform.translation - player_transform.translation).truncate();
-            let resolved = resolve_forces(direction, movement);
-            let resolved_velocity = resolve_forces(direction, player.velocity);
-
-            movement = resolved;
-
-            if keys.pressed(KeyCode::W) {
-                direction /= direction.distance(Vec2::ZERO);
-                movement += direction * GRAPPLE_SPEED;
-            }
-
-            player.velocity = resolved_velocity;
-            controller.translation = Some(movement * delta_s);
+        if keys.just_pressed(KeyCode::F) {
+            println!("velocity: {}, movement: {} ", player.velocity, movement);
         }
+
     }
-}
-
-fn resolve_forces(hook_direction: Vec2, velocity: Vec2) -> Vec2 {
-    let angle = (PI / 2.0) - hook_direction.angle_between(velocity);
-    let magnitude = (velocity.x.powi(2) + velocity.y.powi(2)).sqrt();
-    let unresolved_velocity = magnitude * angle.cos();
-    let x_y_angle = (PI / 2.0) - hook_direction.angle_between(Vec2::X);
-
-    Vec2::new(
-        unresolved_velocity * x_y_angle.cos(),
-        unresolved_velocity * x_y_angle.sin(),
-    )
 }
 
 fn player_death_fall_off_the_map(
