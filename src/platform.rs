@@ -1,5 +1,5 @@
 use crate::{
-    main_menu::HostClient, moving_block::MovableWall, FELLA_SPRITE_SIZE, PLAYER_JUMP_VELOCITY,
+    main_menu::HostClient, FELLA_SPRITE_SIZE, PLAYER_JUMP_VELOCITY,
     PLAYER_RUN_SPEED,
 };
 use bevy::{prelude::*, sprite::collide_aabb::collide, utils::HashMap};
@@ -131,7 +131,6 @@ macro_rules! create_movable_wall {
                 },
                 ..Default::default()
             })
-            .insert(MovableWall { size: $size })
             .insert(RigidBody::Dynamic)
             .insert(TransformBundle::from(Transform::from_xyz($x, $y, 10.0)))
             .insert(Collider::cuboid($size.x / 2.0, $size.y / 2.0))
