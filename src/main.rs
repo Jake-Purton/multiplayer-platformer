@@ -3,9 +3,11 @@
 
 mod client;
 mod death;
+mod grappling_hook;
 mod join_menu;
 mod main_menu;
 mod messages;
+mod moving_block;
 mod next_level;
 mod pinging;
 mod platform;
@@ -21,7 +23,9 @@ use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 use client::MyClientPlugin;
 use death::DeathPlugin;
+use grappling_hook::GrapplePlugin;
 use main_menu::{HostClient, MenuPlugin};
+use moving_block::MovingBlockPlugin;
 use next_level::NextLevelPlugin;
 use platform::PlatformPlugin;
 use player::PlayerPlugin;
@@ -32,6 +36,9 @@ use win::WinPlugin;
 use crate::{join_menu::JoinMenuPlugin, pinging::PingPlugin};
 
 const SPRITE_SCALE: f32 = FRAC_1_SQRT_2;
+const HOOK_SPRITE_SIZE: Vec2 = Vec2::new(24.0, 24.0);
+const HOOK_SPEED: f32 = 2000.0;
+const GRAPPLE_SPEED: f32 = 200.0;
 const FELLA_SPRITE_SIZE: Vec2 = Vec2::new(64.0 * SPRITE_SCALE, 64.0 * SPRITE_SCALE);
 const GRAVITY_CONSTANT: Vec2 = Vec2::new(0.0, -1200.0);
 const PLAYER_JUMP_VELOCITY: f32 = 800.0;
@@ -59,6 +66,7 @@ fn main() {
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
         .add_plugins(DefaultPlugins)
         .insert_resource(CurrentLevel { level_number: 1 })
+        .add_plugin(GrapplePlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(PlatformPlugin)
         .add_plugin(AudioPlugin)
@@ -67,6 +75,7 @@ fn main() {
         .add_plugin(NextLevelPlugin)
         .add_plugin(WinPlugin)
         .add_plugin(MenuPlugin)
+        .add_plugin(MovingBlockPlugin)
         .add_plugin(MyClientPlugin)
         .add_plugin(MyServerPlugin)
         .add_plugin(JoinMenuPlugin)

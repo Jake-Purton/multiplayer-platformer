@@ -1,5 +1,5 @@
 use crate::{
-    main_menu::HostClient, FELLA_SPRITE_SIZE, PLAYER_JUMP_VELOCITY,
+    main_menu::HostClient, moving_block::MovableWall, FELLA_SPRITE_SIZE, PLAYER_JUMP_VELOCITY,
     PLAYER_RUN_SPEED,
 };
 use bevy::{prelude::*, sprite::collide_aabb::collide, utils::HashMap};
@@ -112,6 +112,33 @@ macro_rules! create_killer_wall {
     }};
 }
 
+macro_rules! create_movable_wall {
+    ($commands:expr, $x:expr, $y:expr, $size:expr) => {{
+        $commands
+            .spawn(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgba(0.0, 1.0, 1.0, 0.7),
+                    custom_size: Some($size),
+                    ..default()
+                },
+                transform: Transform {
+                    translation: Vec3 {
+                        x: $x,
+                        y: $y,
+                        z: 15.0,
+                    },
+                    ..default()
+                },
+                ..Default::default()
+            })
+            .insert(MovableWall { size: $size })
+            .insert(RigidBody::Dynamic)
+            .insert(TransformBundle::from(Transform::from_xyz($x, $y, 10.0)))
+            .insert(Collider::cuboid($size.x / 2.0, $size.y / 2.0))
+            .insert(Velocity::default());
+    }};
+}
+
 #[derive(Resource)]
 pub struct LowestPoint {
     pub point: f32,
@@ -149,16 +176,13 @@ fn platform_from_map_system(
                     Vec2::new(MAP_SCALE, MAP_SCALE)
                 )
             } else if *val == 2 {
-                create_level_end!(
+                create_movable_wall!(
                     commands,
                     (x as f32 * MAP_SCALE) - map[0].len() as f32 * MAP_SCALE / 2.0,
                     (y as f32 * MAP_SCALE) - map.len() as f32 * MAP_SCALE / 2.0,
                     Vec2::new(MAP_SCALE, MAP_SCALE)
                 )
             } else if *val == 3 {
-
-                // spawns the player
-
                 let x = (x as f32 * MAP_SCALE) - map[0].len() as f32 * MAP_SCALE / 2.0;
                 let y = (y as f32 * MAP_SCALE) - map.len() as f32 * MAP_SCALE / 2.0;
 
@@ -194,13 +218,19 @@ fn platform_from_map_system(
                     })
                     .insert(KinematicCharacterControllerOutput::default())
                     .insert(TransformBundle::from(Transform::from_xyz(x, y, 10.0)));
-
             } else if *val == 4 {
                 create_killer_wall!(
                     commands,
                     (x as f32 * MAP_SCALE) - map[0].len() as f32 * MAP_SCALE / 2.0,
                     (y as f32 * MAP_SCALE) - map.len() as f32 * MAP_SCALE / 2.0,
                     Vec2::new(MAP_SCALE, MAP_SCALE - 10.0)
+                )
+            } else if *val == 5 {
+                create_level_end!(
+                    commands,
+                    (x as f32 * MAP_SCALE) - map[0].len() as f32 * MAP_SCALE / 2.0,
+                    (y as f32 * MAP_SCALE) - map.len() as f32 * MAP_SCALE / 2.0,
+                    Vec2::new(MAP_SCALE, MAP_SCALE)
                 )
             }
         }

@@ -1,4 +1,5 @@
 use crate::{
+    moving_block::MovableWall,
     player::{rapier_player_movement, Player},
     GameState, GRAVITY_CONSTANT,
 };
@@ -32,6 +33,7 @@ impl Plugin for StartupPlugin {
                     .after(rapier_player_movement)
                     .in_set(OnUpdate(GameState::Gameplay)),
             )
+            .add_system(spinny_cube.in_set(OnUpdate(GameState::Gameplay)))
             .add_system(despawn_everything.in_schedule(OnExit(GameState::Gameplay)))
             .add_system(toggle_mute);
     }
@@ -105,5 +107,14 @@ pub fn despawn_everything(
 
     for cam in camera.iter() {
         commands.entity(cam).despawn()
+    }
+}
+
+fn spinny_cube(mut cubes: Query<(&Velocity, &mut Sprite), With<MovableWall>>) {
+    for (vel, mut cube) in cubes.iter_mut() {
+        if vel.angvel.abs() > 1.0 {
+            let x = vel.angvel / vel.angvel.abs();
+            cube.color += Color::rgba(0.02 * x, -0.02 * x, 0.01 * x, 0.0);
+        }
     }
 }
