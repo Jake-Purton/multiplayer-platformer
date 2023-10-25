@@ -20,7 +20,7 @@ impl Plugin for MenuPlugin {
     }
 }
 
-const PLAY: &str = "Play";
+const PLAY: &str = "Singleplayer";
 const HOST: &str = "Host";
 const JOIN: &str = "Join";
 const EXIT: &str = "Exit";
