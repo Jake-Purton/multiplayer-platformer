@@ -3,7 +3,7 @@ use std::{
     time::SystemTime,
 };
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use bevy_renet::{
     renet::{
         DefaultChannel, RenetConnectionConfig, RenetError, RenetServer, ServerAuthentication,
@@ -70,6 +70,9 @@ fn panic_on_error_system(mut renet_error: EventReader<RenetError>) {
 }
 
 fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
+
+    let mut wall_pos: HashMap<i32, Vec2> = HashMap::new();
+
     for client_id in server.clients_id().into_iter() {
         while let Some(message) = server.receive_message(client_id, DefaultChannel::Unreliable) {
             let client_message: ClientMessageUnreliable = bincode::deserialize(&message).unwrap();
@@ -86,7 +89,16 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
                         DefaultChannel::Unreliable,
                         bincode::serialize(&message).unwrap(),
                     )
-                }
+                },
+                ClientMessageUnreliable::MovingWallVelocity { wall_id, velocity } => {
+
+                    if let Some(a) = wall_pos.get(&wall_id) {
+                        wall_pos.insert(wall_id, *a + velocity);
+                    } else {
+                        wall_pos.insert(wall_id, velocity);
+                    }
+
+                },
             }
         }
 
@@ -128,6 +140,13 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
             }
         }
     }
+
+    let message = ServerMessageUnreliable::MovingWallVel { wall_pos };
+
+    server.broadcast_message(
+        DefaultChannel::Unreliable,
+        bincode::serialize(&message).unwrap(),
+    );
 
     while let Some(event) = server.get_event() {
         match event {

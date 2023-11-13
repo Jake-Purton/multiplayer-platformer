@@ -1,5 +1,5 @@
 use crate::Vec3;
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 
 use serde::{Deserialize, Serialize};
 
@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub enum ServerMessageUnreliable {
     PlayerPosition { id: u64, position: Vec3, level: u8 },
     Map { map: Vec<Vec<u8>>, number: u8 },
+    MovingWallVel { wall_pos: HashMap<i32, Vec2> },
 }
 
 #[derive(Debug, Serialize, Deserialize, Component)]
@@ -23,6 +24,7 @@ pub enum ServerMessageReliable {
 #[derive(Debug, Serialize, Deserialize, Component, Resource)]
 pub enum ClientMessageUnreliable {
     PlayerPosition { pos: Vec3, level: u8 },
+    MovingWallVelocity { wall_id: i32, velocity: Vec2 },
 }
 
 #[derive(Debug, Serialize, Deserialize, Component, Resource)]

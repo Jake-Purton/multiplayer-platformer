@@ -2,9 +2,9 @@ use crate::{
     main_menu::HostClient, moving_block::MovableWall, FELLA_SPRITE_SIZE, PLAYER_JUMP_VELOCITY,
     PLAYER_RUN_SPEED,
 };
+
 use bevy::{prelude::*, sprite::collide_aabb::collide, utils::HashMap};
 use bevy_rapier2d::prelude::*;
-
 use crate::{player::Player, startup_plugin::GameTextures, CurrentLevel, GameState, MAP_SCALE};
 
 #[derive(Component)]
@@ -113,7 +113,13 @@ macro_rules! create_killer_wall {
 }
 
 macro_rules! create_movable_wall {
-    ($commands:expr, $x:expr, $y:expr, $size:expr) => {{
+    ($commands:expr, $x:expr, $y:expr, $size:expr, $level_number:expr) => {{
+
+        // multiply them by different primes to guarantee each block has a unique number, but each block has the same number every time 
+        // (if the map is huge, it is possible for 2 blocks to have the same id)
+        let n1: i32 = ($x as i32 * 1117) + ($y as i32 * 4339) + ($level_number as i32 * 27);
+        println!("{}, {}, {}", n1, $x, $y);
+
         $commands
             .spawn(SpriteBundle {
                 sprite: Sprite {
@@ -131,7 +137,7 @@ macro_rules! create_movable_wall {
                 },
                 ..Default::default()
             })
-            .insert(MovableWall { size: $size })
+            .insert(MovableWall { size: $size, unique_id: n1 })
             .insert(RigidBody::Dynamic)
             .insert(TransformBundle::from(Transform::from_xyz($x, $y, 10.0)))
             .insert(Collider::cuboid($size.x / 2.0, $size.y / 2.0))
@@ -180,7 +186,8 @@ fn platform_from_map_system(
                     commands,
                     (x as f32 * MAP_SCALE) - map[0].len() as f32 * MAP_SCALE / 2.0,
                     (y as f32 * MAP_SCALE) - map.len() as f32 * MAP_SCALE / 2.0,
-                    Vec2::new(MAP_SCALE, MAP_SCALE)
+                    Vec2::new(MAP_SCALE, MAP_SCALE),
+                    current_level.level_number
                 )
             } else if *val == 3 {
                 let x = (x as f32 * MAP_SCALE) - map[0].len() as f32 * MAP_SCALE / 2.0;

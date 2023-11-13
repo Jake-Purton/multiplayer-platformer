@@ -28,6 +28,10 @@ pub fn run_if_online(host: Res<MultiplayerSetting>) -> bool {
     !matches!(host.0, HostClient::Play)
 }
 
+pub fn run_if_not_online(host: Res<MultiplayerSetting>) -> bool {
+    matches!(host.0, HostClient::Play)
+}
+
 pub fn delete_hashmap(mut map: ResMut<UserIdMap>) {
     for i in map.0.clone().keys() {
         map.0.remove(i);
