@@ -1,16 +1,15 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide, window::PrimaryWindow, utils::HashMap};
 use bevy_rapier2d::prelude::Velocity;
-use bevy_renet::renet::{RenetClient, DefaultChannel};
 
-use crate::{startup_plugin::PlayerCamera, GameState, next_level::{run_if_online, run_if_not_online}, messages::ClientMessageUnreliable};
+
+use crate::{startup_plugin::PlayerCamera, GameState, messages::ClientMessageUnreliable};
 
 pub struct MovingBlockPlugin;
 
 impl Plugin for MovingBlockPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(movable_walls.in_set(OnUpdate(GameState::Gameplay)))
-            .add_system(moving_wall_multiplayer.run_if(run_if_online).in_set(OnUpdate(GameState::Gameplay)))
-            .add_system(moving_wall_singleplayer.run_if(run_if_not_online).in_set(OnUpdate(GameState::Gameplay)))
+            .add_system(moving_wall.in_set(OnUpdate(GameState::Gameplay)))
             .insert_resource(MovableWallMultiplayerVel::new());
     }
 }
@@ -73,56 +72,17 @@ fn movable_walls(
     }
 }
 
-fn moving_wall_multiplayer (
-    mut moving_walls: Query<(&mut Velocity, Entity, &Transform, &MovableWall), With<MovingWall>>,
-    windows: Query<&Window, With<PrimaryWindow>>,
-    mouse: Res<Input<MouseButton>>,
-    camera: Query<&Transform, (With<PlayerCamera>, Without<MovingWall>)>,
-    mut commands: Commands,
-    mut client: ResMut<RenetClient>,
-    server_vels: Res<MovableWallMultiplayerVel>,
+fn multiplayer_walls (
+    walls: Query<(&Transform, &MovableWall)>,
 ) {
-    if !moving_walls.is_empty() {
-        if mouse.pressed(MouseButton::Left) {
-            let camera = camera.single();
-            let window = windows.get_single().unwrap();
-            let pos = window.cursor_position().unwrap();
+    for wall in walls.iter() {
 
-            for (mut vel, _, block_transform, mvbwll) in moving_walls.iter_mut() {
-                let pos = Vec3::new(
-                    pos.x - (window.width() / 2.0) + camera.translation.x,
-                    pos.y - (window.height() / 2.0) + camera.translation.y,
-                    block_transform.translation.z,
-                );
-                let mut velocity = (pos - block_transform.translation).truncate();
-                // send this to the server
+        let message = ClientMessageUnreliable::WallPos{ wall_id: wall.1.unique_id, pos: wall.0.translation.truncate() };
 
-                let message = ClientMessageUnreliable::MovingWallVelocity { wall_id: mvbwll.unique_id, velocity };
-
-                client.send_message(
-                    DefaultChannel::Unreliable,
-                    bincode::serialize(&message).unwrap(),
-                );
-
-                // adds the server velocities
-                for i in server_vels.velocity.keys() {
-                    if *i == mvbwll.unique_id {
-                        velocity = server_vels.velocity.get(i).unwrap().clone();
-                    }
-                }
-
-                vel.linvel = (velocity + vel.linvel) * 0.8;
-            }
-        } else {
-            for (_, entity, _, _) in moving_walls.iter() {
-                // send velocity = 0 to the server
-                commands.entity(entity).remove::<MovingWall>();
-            }
-        }
     }
 }
 
-fn moving_wall_singleplayer (
+fn moving_wall (
     mut moving_walls: Query<(&mut Velocity, Entity, &Transform), With<MovingWall>>,
     windows: Query<&Window, With<PrimaryWindow>>,
     mouse: Res<Input<MouseButton>>,

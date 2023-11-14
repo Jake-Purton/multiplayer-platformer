@@ -19,7 +19,7 @@ use crate::{
     player::Player,
     server::{CLIENT_PORT, SERVER_PORT},
     startup_plugin::GameTextures,
-    CurrentLevel, GameState, MultiplayerSetting, FELLA_SPRITE_SIZE, moving_block::MovableWallMultiplayerVel,
+    CurrentLevel, GameState, MultiplayerSetting, FELLA_SPRITE_SIZE,
 };
 
 pub struct MyClientPlugin;
@@ -106,7 +106,6 @@ fn client_update_system(
     mut commands: Commands,
     mut players: Query<(Entity, &AnotherPlayer, &mut Transform)>,
     current_level: Res<CurrentLevel>,
-    mut moving_wall_vel: ResMut<MovableWallMultiplayerVel>
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
         let server_message: ServerMessageUnreliable = bincode::deserialize(&message).unwrap();
@@ -150,8 +149,8 @@ fn client_update_system(
             ServerMessageUnreliable::Map { map: _, number: _ } => {
                 println!("server just sent me a map even though im gaming rn")
             },
-            ServerMessageUnreliable::MovingWallVel { wall_pos } => {
-                moving_wall_vel.velocity = wall_pos;
+            ServerMessageUnreliable::WallPos { client_id, wall_id, pos } => {
+                // make a system that adds the vloxks
             },
         }
     }
