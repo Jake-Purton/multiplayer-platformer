@@ -88,11 +88,12 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
                         bincode::serialize(&message).unwrap(),
                     )
                 },
-                ClientMessageUnreliable::WallPos { wall_id, pos } => {
+                ClientMessageUnreliable::WallPos { level, wall_id, pos } => {
                     let message = ServerMessageUnreliable::WallPos {
                         client_id,
                         pos,
                         wall_id,
+                        level,
                     };
                     server.broadcast_message_except(
                         client_id,

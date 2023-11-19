@@ -1,8 +1,9 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide, window::PrimaryWindow, utils::HashMap};
 use bevy_rapier2d::prelude::Velocity;
+use bevy_renet::renet::{DefaultChannel, RenetClient};
 
 
-use crate::{startup_plugin::PlayerCamera, GameState, messages::ClientMessageUnreliable};
+use crate::{startup_plugin::PlayerCamera, GameState, messages::ClientMessageUnreliable, CurrentLevel, next_level::run_if_online};
 
 pub struct MovingBlockPlugin;
 
@@ -10,7 +11,10 @@ impl Plugin for MovingBlockPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(movable_walls.in_set(OnUpdate(GameState::Gameplay)))
             .add_system(moving_wall.in_set(OnUpdate(GameState::Gameplay)))
-            .insert_resource(MovableWallMultiplayerVel::new());
+            .add_system(spawn_multiplayer_walls.in_set(OnUpdate(GameState::Gameplay)))
+            .add_system(multiplayer_walls.run_if(run_if_online).in_set(OnUpdate(GameState::Gameplay)))
+            .insert_resource(BlockMap::new());
+            
     }
 }
 
@@ -23,18 +27,6 @@ impl Plugin for MovingBlockPlugin {
 pub struct MovableWall {
     pub size: Vec2,
     pub unique_id: i32,
-}
-
-#[derive(Resource)]
-pub struct MovableWallMultiplayerVel {
-    // (player_id, block_id, level_number), block velocity
-    pub velocity: HashMap<i32, Vec2>
-}
-
-impl MovableWallMultiplayerVel {
-    fn new() -> Self {
-        Self { velocity: HashMap::new() }
-    }
 }
 
 #[derive(Component)]
@@ -72,12 +64,27 @@ fn movable_walls(
     }
 }
 
+// a function to spawn the walls 
+fn spawn_multiplayer_walls (
+    block_map: Res<BlockMap>,
+    walls: Query<(&Transform, &MovableWall)>
+) {
+
+}
+//pleasdwasdwasd
+
 fn multiplayer_walls (
     walls: Query<(&Transform, &MovableWall)>,
+    level: Res<CurrentLevel>,
+    mut client: ResMut<RenetClient>,
 ) {
     for wall in walls.iter() {
 
-        let message = ClientMessageUnreliable::WallPos{ wall_id: wall.1.unique_id, pos: wall.0.translation.truncate() };
+        let message = ClientMessageUnreliable::WallPos{ level: level.level_number, wall_id: wall.1.unique_id, pos: wall.0.translation.truncate() };
+
+        let input_message = bincode::serialize(&message).unwrap();
+
+        client.send_message(DefaultChannel::Unreliable, input_message);
 
     }
 }
@@ -109,5 +116,18 @@ fn moving_wall (
                 commands.entity(entity).remove::<MovingWall>();
             }
         }
+    }
+}
+
+
+#[derive(Resource)]
+pub struct BlockMap {
+    // level num - (playerid, block_id, pos)
+    pub blocks: HashMap<u8, Vec<(u64, i32, Vec2)>>
+}
+
+impl BlockMap {
+    fn new() -> Self {
+        BlockMap { blocks: HashMap::new() }
     }
 }

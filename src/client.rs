@@ -19,7 +19,7 @@ use crate::{
     player::Player,
     server::{CLIENT_PORT, SERVER_PORT},
     startup_plugin::GameTextures,
-    CurrentLevel, GameState, MultiplayerSetting, FELLA_SPRITE_SIZE,
+    CurrentLevel, GameState, MultiplayerSetting, FELLA_SPRITE_SIZE, moving_block::BlockMap,
 };
 
 pub struct MyClientPlugin;
@@ -106,6 +106,7 @@ fn client_update_system(
     mut commands: Commands,
     mut players: Query<(Entity, &AnotherPlayer, &mut Transform)>,
     current_level: Res<CurrentLevel>,
+    mut block_map: ResMut<BlockMap>,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
         let server_message: ServerMessageUnreliable = bincode::deserialize(&message).unwrap();
@@ -149,8 +150,33 @@ fn client_update_system(
             ServerMessageUnreliable::Map { map: _, number: _ } => {
                 println!("server just sent me a map even though im gaming rn")
             },
-            ServerMessageUnreliable::WallPos { client_id, wall_id, pos } => {
-                // make a system that adds the vloxks
+            ServerMessageUnreliable::WallPos { level, client_id, wall_id, pos } => {
+                // make a system that adds the blocks to a hashmap 
+                // hashmap key is the level so the client can easily find the right blocks yk
+                if let Some(a) = block_map.blocks.get_mut(&level) {
+
+                    let mut t = false;
+
+                    for i in &mut *a {
+                        if i.0 == client_id && i.1 == wall_id {
+                            i.2 = pos;
+                            t = true;
+                            break;
+                        }
+                    }
+
+                    if !t {
+                        a.push((client_id, wall_id, pos))
+                    }
+
+                } else {
+                    let mut vec = Vec::new();
+                    vec.push((client_id, wall_id, pos));
+                    block_map.blocks.insert(level, vec);
+                }
+
+                // println!("{:?}", block_map.blocks);
+
             },
         }
     }
