@@ -1,9 +1,8 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide, window::PrimaryWindow, utils::HashMap};
-use bevy_rapier2d::prelude::Velocity;
+use bevy_rapier2d::{prelude::Velocity, dynamics::RigidBody, geometry::Collider};
 use bevy_renet::renet::{DefaultChannel, RenetClient};
 
-
-use crate::{startup_plugin::PlayerCamera, GameState, messages::ClientMessageUnreliable, CurrentLevel, next_level::run_if_online};
+use crate::{startup_plugin::PlayerCamera, GameState, messages::ClientMessageUnreliable, CurrentLevel, next_level::run_if_online, MAP_SCALE};
 
 pub struct MovingBlockPlugin;
 
@@ -27,6 +26,12 @@ impl Plugin for MovingBlockPlugin {
 pub struct MovableWall {
     pub size: Vec2,
     pub unique_id: i32,
+}
+
+#[derive(Component)]
+struct MultiplayerWall {
+    client_id: u64,
+    wall_id: i32,
 }
 
 #[derive(Component)]
@@ -67,11 +72,68 @@ fn movable_walls(
 // a function to spawn the walls 
 fn spawn_multiplayer_walls (
     block_map: Res<BlockMap>,
-    walls: Query<(&Transform, &MovableWall)>
+    mut walls: Query<(&mut Transform, &MultiplayerWall)>,
+    current_level: Res<CurrentLevel>,
+    mut commands: Commands,
 ) {
 
+    if let Some(block_vec) = block_map.blocks.get(&current_level.level_number) {
+
+        let mut vec_bool: Vec<(u64, i32, Vec2, bool)> = block_vec.iter().map(|a| (a.0, a.1, a.2, true)).collect();
+
+
+        for (mut transform, multiplayer) in walls.iter_mut() {
+
+            for mut i in &mut vec_bool {
+                if multiplayer.wall_id == i.1 && multiplayer.client_id == i.0 {
+
+                    transform.translation.x = i.2.x;
+                    transform.translation.y = i.2.y;
+                    i.3 = false;
+
+                }
+            }
+
+        }
+
+        while let Some((client_id, wall_id, pos, bool)) = vec_bool.pop() {
+
+            if !bool {
+                continue;
+            } else {
+
+                let size = Vec2::new(MAP_SCALE, MAP_SCALE);
+
+                commands
+                .spawn(SpriteBundle {
+                    sprite: Sprite {
+                        color: Color::rgba(1.0, 0.1, 0.5, 0.7),
+                        custom_size: Some(size),
+                        ..default()
+                    },
+                    transform: Transform {
+                        translation: Vec3 {
+                            x: pos.x,
+                            y: pos.y,
+                            z: 15.0,
+                        },
+                        ..default()
+                    },
+                    ..Default::default()
+                })
+                .insert(RigidBody::Fixed)
+                .insert(TransformBundle::from(Transform::from_xyz(pos.x, pos.y, 10.0)))
+                .insert(Collider::cuboid(size.x / 2.0, size.y / 2.0))
+                .insert(MultiplayerWall { client_id, wall_id })
+                .insert(Velocity::default());
+            }
+            
+        }
+
+    }
+
 }
-//pleasdwasdwasd
+//please
 
 fn multiplayer_walls (
     walls: Query<(&Transform, &MovableWall)>,
