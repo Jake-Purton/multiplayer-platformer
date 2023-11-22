@@ -1,7 +1,7 @@
 use crate::{
     moving_block::MovableWall,
     player::{rapier_player_movement, Player},
-    GameState, GRAVITY_CONSTANT,
+    GameState, GRAVITY_CONSTANT, BACKGROUND_COLOUR,
 };
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_kira_audio::{prelude::*, Audio};
@@ -64,7 +64,7 @@ fn pre_startup(
 }
 
 fn setup(mut commands: Commands) {
-    commands.insert_resource(ClearColor(Color::rgb(1.0, 0.5, 0.0)));
+    commands.insert_resource(ClearColor(BACKGROUND_COLOUR));
     commands
         .spawn(Camera2dBundle::default())
         .insert(PlayerCamera)

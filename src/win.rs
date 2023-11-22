@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     startup_plugin::{despawn_everything, GameTextures},
-    GameState,
+    GameState, BACKGROUND_COLOUR,
 };
 
 pub struct WinPlugin;
@@ -15,7 +15,7 @@ impl Plugin for WinPlugin {
 }
 
 fn setup_win_screen(mut commands: Commands, game_textures: Res<GameTextures>) {
-    commands.insert_resource(ClearColor(Color::rgb(1.0, 0.5, 0.0)));
+    commands.insert_resource(ClearColor(BACKGROUND_COLOUR));
     commands.spawn(Camera2dBundle::default());
     commands.spawn(SpriteBundle {
         texture: game_textures.you_win.clone(),

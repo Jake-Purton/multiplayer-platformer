@@ -10,7 +10,7 @@ use crate::{
     main_menu::{HostClient, Menu},
     server::{CLIENT_PORT, SERVER_PORT},
     startup_plugin::despawn_everything,
-    GameState, MultiplayerSetting,
+    GameState, MultiplayerSetting, BACKGROUND_COLOUR,
 };
 
 use bevy_renet::renet::{ClientAuthentication, RenetClient, RenetConnectionConfig};
@@ -38,7 +38,7 @@ impl Plugin for JoinMenuPlugin {
 pub struct IPString(String);
 
 fn setup_join_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.insert_resource(ClearColor(Color::rgb(1.0, 0.5, 0.0)));
+    commands.insert_resource(ClearColor(BACKGROUND_COLOUR));
     commands.spawn(Camera2dBundle::default());
 
     commands.spawn((

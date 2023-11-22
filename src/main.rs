@@ -44,6 +44,7 @@ const GRAVITY_CONSTANT: Vec2 = Vec2::new(0.0, -1200.0);
 const PLAYER_JUMP_VELOCITY: f32 = 800.0;
 const PLAYER_RUN_SPEED: f32 = 300.0;
 const MAP_SCALE: f32 = 80.0;
+const BACKGROUND_COLOUR: Color = Color::rgb(1.0, 0.5, 0.0);
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum GameState {

@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     next_level::{delete_hashmap, run_if_online},
     startup_plugin::{despawn_everything, GameTextures},
-    GameState,
+    GameState, BACKGROUND_COLOUR,
 };
 
 pub struct DeathPlugin;
@@ -23,7 +23,7 @@ impl Plugin for DeathPlugin {
 }
 
 fn setup_death(mut commands: Commands, game_textures: Res<GameTextures>) {
-    commands.insert_resource(ClearColor(Color::rgb(1.0, 0.5, 0.0)));
+    commands.insert_resource(ClearColor(BACKGROUND_COLOUR));
     commands.spawn(Camera2dBundle::default());
     commands.spawn(SpriteBundle {
         texture: game_textures.r_to_respawn.clone(),
@@ -44,5 +44,5 @@ fn restart(keys: Res<Input<KeyCode>>, mut game_state: ResMut<NextState<GameState
 
 fn background(time: Res<Time>, mut commands: Commands) {
     let time = (time.elapsed_seconds() * 2.0).sin() / 8.0;
-    commands.insert_resource(ClearColor(Color::rgb(1.0 + time, 0.6 - time, 0.0)));
+    commands.insert_resource(ClearColor(BACKGROUND_COLOUR + Color::rgb(time, time, 0.0)));
 }

@@ -7,7 +7,7 @@ use crate::{
     platform::{level_directory, Maps},
     server::new_renet_server,
     startup_plugin::despawn_everything,
-    GameState, MultiplayerSetting,
+    GameState, MultiplayerSetting, BACKGROUND_COLOUR,
 };
 
 pub struct MenuPlugin;
@@ -35,7 +35,7 @@ pub enum HostClient {
 pub struct Menu;
 
 fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.insert_resource(ClearColor(Color::rgb(1.0, 0.5, 0.0)));
+    commands.insert_resource(ClearColor(BACKGROUND_COLOUR));
     commands.spawn(Camera2dBundle::default());
 
     commands.spawn((
