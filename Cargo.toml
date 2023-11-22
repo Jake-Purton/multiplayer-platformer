@@ -9,6 +9,7 @@ description = "A game made using bevy game engine"
 
 [dependencies]
 bevy = {version = "0.10", features = ["dynamic_linking"]}
+# bevy = {version = "0.10"}
 bevy_rapier2d = "0.21"
 bevy_kira_audio = { version = "0.15", features = ["wav"]}
 bevy_renet = "0.0.7"
