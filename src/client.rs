@@ -124,7 +124,7 @@ fn client_update_system(
                         // spawn the entity and label it a
                         commands
                             .spawn(SpriteBundle {
-                                texture: game_textures.player.clone(),
+                                texture: game_textures.rand_player(&id),
                                 sprite: Sprite {
                                     custom_size: Some(FELLA_SPRITE_SIZE),
                                     ..Default::default()

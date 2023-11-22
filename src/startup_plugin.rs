@@ -10,6 +10,10 @@ use bevy_rapier2d::prelude::{RapierConfiguration, RigidBody, Velocity};
 #[derive(Resource)]
 pub struct GameTextures {
     pub player: Handle<Image>,
+    pub player1: Handle<Image>,
+    pub player2: Handle<Image>,
+    pub player3: Handle<Image>,
+    pub player4: Handle<Image>,
     pub r_to_respawn: Handle<Image>,
     pub you_win: Handle<Image>,
     pub menu: Handle<Image>,
@@ -17,6 +21,20 @@ pub struct GameTextures {
     pub play: Handle<Image>,
     pub hook: Handle<Image>,
     pub online: Handle<Image>,
+}
+
+impl GameTextures {
+    pub fn rand_player (&self, id: &u64) -> Handle<Image> {
+
+        match (id % 4) + 1 {
+            1 => self.player1.clone(),
+            2 => self.player2.clone(),
+            3 => self.player3.clone(),
+            4 => self.player4.clone(),
+            _ => self.player1.clone(),
+        }
+
+    }
 }
 
 #[derive(Component)]
@@ -47,6 +65,10 @@ fn pre_startup(
 ) {
     commands.insert_resource(GameTextures {
         player: asset_server.load("images/fella.png"),
+        player1: asset_server.load("images/fella-1.png"),
+        player2: asset_server.load("images/fella-2.png"),
+        player3: asset_server.load("images/fella-3.png"),
+        player4: asset_server.load("images/fella-4.png"),
         r_to_respawn: asset_server.load("death-messages/respawn.png"),
         you_win: asset_server.load("death-messages/you-win.png"),
         menu: asset_server.load("death-messages/menu.png"),
