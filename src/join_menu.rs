@@ -1,6 +1,6 @@
 use std::{
     net::{SocketAddr, UdpSocket},
-    time::SystemTime,
+    time::{SystemTime, Duration},
 };
 
 use bevy::prelude::*;
@@ -26,6 +26,7 @@ pub struct JoinMenuPlugin;
 impl Plugin for JoinMenuPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.insert_resource(IPString(String::new()))
+            .insert_resource(BarTimer::new())
             .add_system(setup_join_menu.in_schedule(OnEnter(GameState::JoinMenu)))
             .add_system(join_input_ip.in_set(OnUpdate(GameState::JoinMenu)))
             .add_system(update_text.in_set(OnUpdate(GameState::JoinMenu)))
@@ -54,15 +55,58 @@ fn setup_join_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-fn update_text(ip_string: ResMut<IPString>, mut text: Query<&mut Text, With<Menu>>) {
+#[derive(Resource)]
+struct BarTimer {
+    timer: Timer,
+    b: bool,
+}
+
+impl BarTimer {
+    fn new() -> Self {
+        let timer = Timer::new(Duration::from_millis(700), TimerMode::Repeating);
+        Self{ timer, b: true }
+    }
+
+    fn tick(&mut self, dt: Duration) -> bool {
+
+        self.timer.tick(dt);
+        if self.timer.just_finished() {
+            self.b = !self.b;
+        }
+
+        return self.b;
+
+    }
+}
+
+fn update_text(
+    ip_string: Res<IPString>, 
+    mut text: Query<&mut Text, With<Menu>>,
+    mut timer: ResMut<BarTimer>,
+    time: Res<Time>
+) {
     for mut text in &mut text {
-        text.sections[0].value = format!("Server IP: {}", ip_string.0.clone());
+
+        let dt = time.delta();
+        let b = timer.tick(dt);
+        let mut a = ip_string.0.clone();
+        if b {
+            a.push('|')
+        }
+
+        text.sections[0].value = format!("Server IP: {}", a);
     }
 }
 
 fn text_input(mut char_evr: EventReader<ReceivedCharacter>, mut ip_string: ResMut<IPString>) {
     for ev in char_evr.iter() {
         let char = ev.char;
+
+        if let Some(a) = ip_string.0.pop() {
+            if a != '|' {
+                ip_string.0.push(a);
+            }
+        }
 
         if char == '\x08' {
             ip_string.0.pop();
