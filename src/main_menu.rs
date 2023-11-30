@@ -1,13 +1,14 @@
 use std::{fs::File, io::Read};
 
 use bevy::{app::AppExit, prelude::*, window::PrimaryWindow};
+use bevy_renet::renet::{RenetClient, RenetServer};
 
 use crate::{
     client::new_renet_client,
     platform::{level_directory, Maps},
     server::new_renet_server,
     startup_plugin::despawn_everything,
-    GameState, MultiplayerSetting, BACKGROUND_COLOUR,
+    GameState, MultiplayerSetting, BACKGROUND_COLOUR, CurrentLevel,
 };
 
 pub struct MenuPlugin;
@@ -16,7 +17,12 @@ impl Plugin for MenuPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_system(setup_menu.in_schedule(OnEnter(GameState::Menu)))
             .add_system(menu_click_system.in_set(OnUpdate(GameState::Menu)))
-            .add_system(despawn_everything.in_schedule(OnExit(GameState::Menu)));
+            .add_system(despawn_everything.in_schedule(OnExit(GameState::Menu)))
+            .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Gameplay)))
+            .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Death)))
+            // .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Win)))
+            .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Win)))
+            ;
     }
 }
 
@@ -24,6 +30,34 @@ const PLAY: &str = "Singleplayer";
 const HOST: &str = "Host";
 const JOIN: &str = "Join";
 const EXIT: &str = "Exit";
+
+fn go_back_to_menu (
+    keys: Res<Input<KeyCode>>,
+    mut game_state: ResMut<NextState<GameState>>,
+    mut commands: Commands,
+    mut cl: ResMut<CurrentLevel>,
+    mut setting: ResMut<MultiplayerSetting>,
+) {
+    if keys.just_pressed(KeyCode::Escape) {
+        println!("escape pressed {:?}", game_state.0);
+        game_state.set(GameState::Menu);
+        cl.level_number = 1;
+
+        match setting.0 {
+            HostClient::Host => {
+                setting.0 = HostClient::Play;
+                commands.remove_resource::<RenetClient>();
+                commands.remove_resource::<RenetServer>();
+                
+            },
+            HostClient::Client => {
+                setting.0 = HostClient::Play;
+                commands.remove_resource::<RenetClient>();
+            },
+            HostClient::Play => (),
+        }
+    }
+}
 
 pub enum HostClient {
     Host,
