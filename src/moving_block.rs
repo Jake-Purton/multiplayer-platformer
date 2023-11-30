@@ -84,7 +84,7 @@ fn spawn_multiplayer_walls (
 
         for (mut transform, multiplayer) in walls.iter_mut() {
 
-            for mut i in &mut vec_bool {
+            for i in &mut vec_bool {
                 if multiplayer.wall_id == i.1 && multiplayer.client_id == i.0 {
 
                     transform.translation.x = i.2.x;

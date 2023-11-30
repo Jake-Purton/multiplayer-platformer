@@ -74,7 +74,7 @@ impl BarTimer {
             self.b = !self.b;
         }
 
-        return self.b;
+        self.b
 
     }
 }
@@ -144,6 +144,11 @@ fn join_input_ip(
                 BindError::Format => println!("format error"),
             },
         }
+    } else if keys.just_pressed(KeyCode::Escape) {
+        println!("escape pressed");
+        game_state.set(GameState::Menu);
+        commands.insert_resource(MultiplayerSetting(HostClient::Play));
+        commands.remove_resource::<RenetClient>();
     }
 }
 

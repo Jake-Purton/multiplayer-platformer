@@ -90,7 +90,7 @@ pub fn menu_click_system(
 
     if let Some(position) = window.cursor_position() {
         for (mut items, size) in menu_items.iter_mut() {
-            for (i, mut section) in items.sections.iter_mut().enumerate() {
+            for (i, section) in items.sections.iter_mut().enumerate() {
                 // to find the position of text: i * size / total_items is the highest y value. lowest is highest + 70
                 let highest = window.height() - (i as f32 * size.size.y / 4.0);
                 let lowest = highest - 60.0;

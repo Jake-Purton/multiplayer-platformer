@@ -170,8 +170,7 @@ fn client_update_system(
                     }
 
                 } else {
-                    let mut vec = Vec::new();
-                    vec.push((client_id, wall_id, pos));
+                    let vec = vec![(client_id, wall_id, pos)];
                     block_map.blocks.insert(level, vec);
                 }
 
