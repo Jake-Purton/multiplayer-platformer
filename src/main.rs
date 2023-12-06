@@ -17,7 +17,7 @@ mod startup_plugin;
 mod win;
 
 use bevy::prelude::*;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+// use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 use client::MyClientPlugin;
@@ -82,8 +82,7 @@ fn main() {
         .add_plugin(JoinMenuPlugin)
         .add_plugin(PingPlugin)
         .insert_resource(MultiplayerSetting(HostClient::Play))
-        .add_plugin(WorldInspectorPlugin::new())
-        // .add_plugin(WorldInspectorPlugin::default())
+        // .add_plugin(WorldInspectorPlugin::new())
         // .add_plugin(RapierDebugRenderPlugin::default())
         .run();
 }

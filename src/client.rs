@@ -151,27 +151,32 @@ fn client_update_system(
             ServerMessageUnreliable::Map { map: _, number: _ } => {
                 println!("server just sent me a map even though im gaming rn")
             }
+
+            // When the client recieves a message from the server with the wall position, 
+            // it adds it to the hashmap
             ServerMessageUnreliable::WallPos {
                 level,
                 client_id,
                 wall_id,
                 pos,
             } => {
-                // make a system that adds the blocks to a hashmap
-                // hashmap key is the level so the client can easily find the right blocks yk
-                if let Some(a) = block_map.blocks.get_mut(&level) {
+                // hashmap key is the level so the client can easily find the right blocks
+                // if there are some blocks in this level
+                if let Some(existing_blocks) = block_map.blocks.get_mut(&level) {
                     let mut t = false;
-
-                    for i in &mut *a {
+                    // iterate over these blocks and see if they match the message recieved by the server
+                    for i in &mut *existing_blocks {
+                        // if the block matches
                         if i.0 == client_id && i.1 == wall_id {
+                            // update position
                             i.2 = pos;
                             t = true;
                             break;
                         }
                     }
-
+                    // if none match, create another block
                     if !t {
-                        a.push((client_id, wall_id, pos))
+                        existing_blocks.push((client_id, wall_id, pos))
                     }
                 } else {
                     let vec = vec![(client_id, wall_id, pos)];

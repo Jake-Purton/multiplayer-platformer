@@ -87,6 +87,10 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
                         bincode::serialize(&message).unwrap(),
                     )
                 }
+
+                // when the wall position message is recieved by the server, the server
+                // broadcasts a message to all of the other clients, with cliend_id,
+                // level, position and wall_id.
                 ClientMessageUnreliable::WallPos {
                     level,
                     wall_id,

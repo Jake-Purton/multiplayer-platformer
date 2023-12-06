@@ -133,7 +133,7 @@ pub fn menu_click_system(
                         match section.value.trim() {
                             PLAY => {
                                 let mut cl = 1;
-
+                                println!("play");
                                 while let Ok(mut file) =
                                     File::open(level_directory(cl, &HostClient::Play))
                                 {
@@ -153,7 +153,7 @@ pub fn menu_click_system(
                                     map.reverse();
 
                                     maps.maps.insert(cl, map);
-
+                                    println!("map {cl}");
                                     cl += 1;
                                 }
 

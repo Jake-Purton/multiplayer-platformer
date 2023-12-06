@@ -162,6 +162,9 @@ fn platform_from_map_system(
     current_level: Res<CurrentLevel>,
     maps: Res<Maps>,
 ) {
+
+    println!("here");
+
     let map = maps
         .maps
         .get(&(current_level.level_number))
