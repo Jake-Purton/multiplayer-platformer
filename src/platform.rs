@@ -3,9 +3,9 @@ use crate::{
     PLAYER_RUN_SPEED,
 };
 
+use crate::{player::Player, startup_plugin::GameTextures, CurrentLevel, GameState, MAP_SCALE};
 use bevy::{prelude::*, sprite::collide_aabb::collide, utils::HashMap};
 use bevy_rapier2d::prelude::*;
-use crate::{player::Player, startup_plugin::GameTextures, CurrentLevel, GameState, MAP_SCALE};
 
 #[derive(Component)]
 pub struct KillerWall {
@@ -115,7 +115,7 @@ macro_rules! create_killer_wall {
 macro_rules! create_movable_wall {
     ($commands:expr, $x:expr, $y:expr, $size:expr, $level_number:expr) => {{
 
-        // multiply them by different primes to guarantee each block has a unique number, but each block has the same number every time 
+        // multiply them by different primes to guarantee each block has a unique number, but each block has the same number every time
         // (if the map is huge, it is possible for 2 blocks to have the same id)
         let n1: i32 = ($x as i32 * 1117) + ($y as i32 * 4339) + ($level_number as i32 * 27);
         println!("{}, {}, {}", n1, $x, $y);

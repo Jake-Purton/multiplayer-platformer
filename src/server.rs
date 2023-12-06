@@ -70,7 +70,6 @@ fn panic_on_error_system(mut renet_error: EventReader<RenetError>) {
 }
 
 fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
-
     for client_id in server.clients_id().into_iter() {
         while let Some(message) = server.receive_message(client_id, DefaultChannel::Unreliable) {
             let client_message: ClientMessageUnreliable = bincode::deserialize(&message).unwrap();
@@ -87,8 +86,12 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
                         DefaultChannel::Unreliable,
                         bincode::serialize(&message).unwrap(),
                     )
-                },
-                ClientMessageUnreliable::WallPos { level, wall_id, pos } => {
+                }
+                ClientMessageUnreliable::WallPos {
+                    level,
+                    wall_id,
+                    pos,
+                } => {
                     let message = ServerMessageUnreliable::WallPos {
                         client_id,
                         pos,
@@ -100,7 +103,7 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
                         DefaultChannel::Unreliable,
                         bincode::serialize(&message).unwrap(),
                     )
-                },
+                }
             }
         }
 

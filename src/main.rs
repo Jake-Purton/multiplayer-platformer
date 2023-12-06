@@ -16,9 +16,8 @@ mod server;
 mod startup_plugin;
 mod win;
 
-use std::f32::consts::FRAC_1_SQRT_2;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy::prelude::*;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 use client::MyClientPlugin;
@@ -31,6 +30,7 @@ use platform::PlatformPlugin;
 use player::PlayerPlugin;
 use server::MyServerPlugin;
 use startup_plugin::StartupPlugin;
+use std::f32::consts::FRAC_1_SQRT_2;
 use win::WinPlugin;
 
 use crate::{join_menu::JoinMenuPlugin, pinging::PingPlugin};

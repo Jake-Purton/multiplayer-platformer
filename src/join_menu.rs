@@ -1,6 +1,6 @@
 use std::{
     net::{SocketAddr, UdpSocket},
-    time::{SystemTime, Duration},
+    time::{Duration, SystemTime},
 };
 
 use bevy::prelude::*;
@@ -64,29 +64,26 @@ struct BarTimer {
 impl BarTimer {
     fn new() -> Self {
         let timer = Timer::new(Duration::from_millis(700), TimerMode::Repeating);
-        Self{ timer, b: true }
+        Self { timer, b: true }
     }
 
     fn tick(&mut self, dt: Duration) -> bool {
-
         self.timer.tick(dt);
         if self.timer.just_finished() {
             self.b = !self.b;
         }
 
         self.b
-
     }
 }
 
 fn update_text(
-    ip_string: Res<IPString>, 
+    ip_string: Res<IPString>,
     mut text: Query<&mut Text, With<Menu>>,
     mut timer: ResMut<BarTimer>,
-    time: Res<Time>
+    time: Res<Time>,
 ) {
     for mut text in &mut text {
-
         let dt = time.delta();
         let b = timer.tick(dt);
         let mut a = ip_string.0.clone();

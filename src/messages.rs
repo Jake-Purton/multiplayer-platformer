@@ -6,9 +6,21 @@ use serde::{Deserialize, Serialize};
 // message sent from a server
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ServerMessageUnreliable {
-    PlayerPosition { id: u64, position: Vec3, level: u8 },
-    Map { map: Vec<Vec<u8>>, number: u8 },
-    WallPos { client_id: u64, wall_id: i32, pos: Vec2, level: u8 }
+    PlayerPosition {
+        id: u64,
+        position: Vec3,
+        level: u8,
+    },
+    Map {
+        map: Vec<Vec<u8>>,
+        number: u8,
+    },
+    WallPos {
+        client_id: u64,
+        wall_id: i32,
+        pos: Vec2,
+        level: u8,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize, Component)]
@@ -24,7 +36,7 @@ pub enum ServerMessageReliable {
 #[derive(Debug, Serialize, Deserialize, Component, Resource)]
 pub enum ClientMessageUnreliable {
     PlayerPosition { pos: Vec3, level: u8 },
-    WallPos { level: u8, wall_id: i32, pos: Vec2 }
+    WallPos { level: u8, wall_id: i32, pos: Vec2 },
 }
 
 #[derive(Debug, Serialize, Deserialize, Component, Resource)]

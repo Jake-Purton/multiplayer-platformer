@@ -1,7 +1,7 @@
 use crate::{
     moving_block::MovableWall,
     player::{rapier_player_movement, Player},
-    GameState, GRAVITY_CONSTANT, BACKGROUND_COLOUR,
+    GameState, BACKGROUND_COLOUR, GRAVITY_CONSTANT,
 };
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_kira_audio::{prelude::*, Audio};
@@ -24,8 +24,7 @@ pub struct GameTextures {
 }
 
 impl GameTextures {
-    pub fn rand_player (&self, id: &u64) -> Handle<Image> {
-
+    pub fn rand_player(&self, id: &u64) -> Handle<Image> {
         match (id % 4) + 1 {
             1 => self.player1.clone(),
             2 => self.player2.clone(),
@@ -33,7 +32,6 @@ impl GameTextures {
             4 => self.player4.clone(),
             _ => self.player1.clone(),
         }
-
     }
 }
 

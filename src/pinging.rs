@@ -166,7 +166,7 @@ fn listen_for_pong(
                         game_state.set(GameState::Gameplay);
                     }
                 }
-            },
+            }
             _ => (),
         }
     }

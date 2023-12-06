@@ -16,10 +16,11 @@ use std::{collections::HashMap, net::UdpSocket, time::SystemTime};
 use crate::{
     main_menu::HostClient,
     messages::{ClientMessageUnreliable, ServerMessageUnreliable},
+    moving_block::BlockMap,
     player::Player,
     server::{CLIENT_PORT, SERVER_PORT},
     startup_plugin::GameTextures,
-    CurrentLevel, GameState, MultiplayerSetting, FELLA_SPRITE_SIZE, moving_block::BlockMap,
+    CurrentLevel, GameState, MultiplayerSetting, FELLA_SPRITE_SIZE,
 };
 
 pub struct MyClientPlugin;
@@ -149,12 +150,16 @@ fn client_update_system(
             }
             ServerMessageUnreliable::Map { map: _, number: _ } => {
                 println!("server just sent me a map even though im gaming rn")
-            },
-            ServerMessageUnreliable::WallPos { level, client_id, wall_id, pos } => {
-                // make a system that adds the blocks to a hashmap 
+            }
+            ServerMessageUnreliable::WallPos {
+                level,
+                client_id,
+                wall_id,
+                pos,
+            } => {
+                // make a system that adds the blocks to a hashmap
                 // hashmap key is the level so the client can easily find the right blocks yk
                 if let Some(a) = block_map.blocks.get_mut(&level) {
-
                     let mut t = false;
 
                     for i in &mut *a {
@@ -168,15 +173,13 @@ fn client_update_system(
                     if !t {
                         a.push((client_id, wall_id, pos))
                     }
-
                 } else {
                     let vec = vec![(client_id, wall_id, pos)];
                     block_map.blocks.insert(level, vec);
                 }
 
                 // println!("{:?}", block_map.blocks);
-
-            },
+            }
         }
     }
 

@@ -8,7 +8,7 @@ use crate::{
     platform::{level_directory, Maps},
     server::new_renet_server,
     startup_plugin::despawn_everything,
-    GameState, MultiplayerSetting, BACKGROUND_COLOUR, CurrentLevel,
+    CurrentLevel, GameState, MultiplayerSetting, BACKGROUND_COLOUR,
 };
 
 pub struct MenuPlugin;
@@ -21,8 +21,7 @@ impl Plugin for MenuPlugin {
             .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Gameplay)))
             .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Death)))
             // .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Win)))
-            .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Win)))
-            ;
+            .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Win)));
     }
 }
 
@@ -31,7 +30,7 @@ const HOST: &str = "Host";
 const JOIN: &str = "Join";
 const EXIT: &str = "Exit";
 
-fn go_back_to_menu (
+fn go_back_to_menu(
     keys: Res<Input<KeyCode>>,
     mut game_state: ResMut<NextState<GameState>>,
     mut commands: Commands,
@@ -48,12 +47,11 @@ fn go_back_to_menu (
                 setting.0 = HostClient::Play;
                 commands.remove_resource::<RenetClient>();
                 commands.remove_resource::<RenetServer>();
-                
-            },
+            }
             HostClient::Client => {
                 setting.0 = HostClient::Play;
                 commands.remove_resource::<RenetClient>();
-            },
+            }
             HostClient::Play => (),
         }
     }

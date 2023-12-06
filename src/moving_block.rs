@@ -1,8 +1,11 @@
-use bevy::{prelude::*, sprite::collide_aabb::collide, window::PrimaryWindow, utils::HashMap};
-use bevy_rapier2d::{prelude::Velocity, dynamics::RigidBody, geometry::Collider};
+use bevy::{prelude::*, sprite::collide_aabb::collide, utils::HashMap, window::PrimaryWindow};
+use bevy_rapier2d::{dynamics::RigidBody, geometry::Collider, prelude::Velocity};
 use bevy_renet::renet::{DefaultChannel, RenetClient};
 
-use crate::{startup_plugin::PlayerCamera, GameState, messages::ClientMessageUnreliable, CurrentLevel, next_level::run_if_online, MAP_SCALE};
+use crate::{
+    messages::ClientMessageUnreliable, next_level::run_if_online, startup_plugin::PlayerCamera,
+    CurrentLevel, GameState, MAP_SCALE,
+};
 
 pub struct MovingBlockPlugin;
 
@@ -11,9 +14,12 @@ impl Plugin for MovingBlockPlugin {
         app.add_system(movable_walls.in_set(OnUpdate(GameState::Gameplay)))
             .add_system(moving_wall.in_set(OnUpdate(GameState::Gameplay)))
             .add_system(spawn_multiplayer_walls.in_set(OnUpdate(GameState::Gameplay)))
-            .add_system(send_block_positions.run_if(run_if_online).in_set(OnUpdate(GameState::Gameplay)))
+            .add_system(
+                send_block_positions
+                    .run_if(run_if_online)
+                    .in_set(OnUpdate(GameState::Gameplay)),
+            )
             .insert_resource(BlockMap::new());
-            
     }
 }
 
@@ -75,11 +81,11 @@ fn movable_walls(
 #[derive(Resource)]
 pub struct BlockMap {
     // level num - (playerid, block_id, pos)
-    pub blocks: HashMap<u8, Vec<(u64, i32, Vec2)>>
+    pub blocks: HashMap<u8, Vec<(u64, i32, Vec2)>>,
 }
 
 // a function to spawn the walls that other players control
-fn spawn_multiplayer_walls (
+fn spawn_multiplayer_walls(
     // the resource with the positions of the walls
     block_map: Res<BlockMap>,
 
@@ -93,11 +99,11 @@ fn spawn_multiplayer_walls (
 ) {
     // if there are any blocks already on this level that need to be spawned or updated
     if let Some(block_vec) = block_map.blocks.get(&current_level.level_number) {
-
         // makes a vector with tuples of (player_id, block_id, position, boolean)
         // in regards to the boolean, true means it needs to be spawned
         // false means it has already been spawned
-        let mut vec_bool: Vec<(u64, i32, Vec2, bool)> = block_vec.iter().map(|a| (a.0, a.1, a.2, true)).collect();
+        let mut vec_bool: Vec<(u64, i32, Vec2, bool)> =
+            block_vec.iter().map(|a| (a.0, a.1, a.2, true)).collect();
 
         // iterating over the walls that have already been spawned
         for (mut transform, multiplayer) in walls.iter_mut() {
@@ -111,11 +117,9 @@ fn spawn_multiplayer_walls (
                     i.3 = false;
                 }
             }
-
         }
         // loops over and pops the stack
         while let Some((client_id, wall_id, pos, bool)) = vec_bool.pop() {
-
             // doesn't need to be updated
             if !bool {
                 continue;
@@ -123,50 +127,53 @@ fn spawn_multiplayer_walls (
                 // spawns a block with the correct components and in the right position
                 let size = Vec2::new(MAP_SCALE, MAP_SCALE);
                 commands
-                .spawn(SpriteBundle {
-                    sprite: Sprite {
-                        color: Color::rgba(1.0, 0.1, 0.5, 0.7),
-                        custom_size: Some(size),
-                        ..default()
-                    },
-                    transform: Transform {
-                        translation: Vec3 {
-                            x: pos.x,
-                            y: pos.y,
-                            z: 15.0,
+                    .spawn(SpriteBundle {
+                        sprite: Sprite {
+                            color: Color::rgba(1.0, 0.1, 0.5, 0.7),
+                            custom_size: Some(size),
+                            ..default()
                         },
-                        ..default()
-                    },
-                    ..Default::default()
-                })
-                .insert(RigidBody::Fixed)
-                .insert(TransformBundle::from(Transform::from_xyz(pos.x, pos.y, 10.0)))
-                .insert(Collider::cuboid(size.x / 2.0, size.y / 2.0))
-                .insert(MultiplayerWall { client_id, wall_id })
-                .insert(Velocity::default());
+                        transform: Transform {
+                            translation: Vec3 {
+                                x: pos.x,
+                                y: pos.y,
+                                z: 15.0,
+                            },
+                            ..default()
+                        },
+                        ..Default::default()
+                    })
+                    .insert(RigidBody::Fixed)
+                    .insert(TransformBundle::from(Transform::from_xyz(
+                        pos.x, pos.y, 10.0,
+                    )))
+                    .insert(Collider::cuboid(size.x / 2.0, size.y / 2.0))
+                    .insert(MultiplayerWall { client_id, wall_id })
+                    .insert(Velocity::default());
             }
-            
         }
-
     }
-
 }
 
 // a system that sends the current positions of all visible blocks to the server.
-fn send_block_positions (
+fn send_block_positions(
     walls: Query<(&Transform, &MovableWall)>,
     level: Res<CurrentLevel>,
     mut client: ResMut<RenetClient>,
 ) {
     // iterates over all of the movable wall entities and sends the level, wall_id and position to the server
     for wall in walls.iter() {
-        let message = ClientMessageUnreliable::WallPos{ level: level.level_number, wall_id: wall.1.unique_id, pos: wall.0.translation.truncate() };
+        let message = ClientMessageUnreliable::WallPos {
+            level: level.level_number,
+            wall_id: wall.1.unique_id,
+            pos: wall.0.translation.truncate(),
+        };
         let input_message = bincode::serialize(&message).unwrap();
         client.send_message(DefaultChannel::Unreliable, input_message);
     }
 }
 
-fn moving_wall (
+fn moving_wall(
     mut moving_walls: Query<(&mut Velocity, Entity, &Transform), With<MovingWall>>,
     windows: Query<&Window, With<PrimaryWindow>>,
     mouse: Res<Input<MouseButton>>,
@@ -196,10 +203,10 @@ fn moving_wall (
     }
 }
 
-
-
 impl BlockMap {
     fn new() -> Self {
-        BlockMap { blocks: HashMap::new() }
+        BlockMap {
+            blocks: HashMap::new(),
+        }
     }
 }
