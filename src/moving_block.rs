@@ -11,7 +11,7 @@ impl Plugin for MovingBlockPlugin {
         app.add_system(movable_walls.in_set(OnUpdate(GameState::Gameplay)))
             .add_system(moving_wall.in_set(OnUpdate(GameState::Gameplay)))
             .add_system(spawn_multiplayer_walls.in_set(OnUpdate(GameState::Gameplay)))
-            .add_system(multiplayer_walls.run_if(run_if_online).in_set(OnUpdate(GameState::Gameplay)))
+            .add_system(send_block_positions.run_if(run_if_online).in_set(OnUpdate(GameState::Gameplay)))
             .insert_resource(BlockMap::new());
             
     }
@@ -69,41 +69,59 @@ fn movable_walls(
     }
 }
 
-// a function to spawn the walls 
+// a data structure that has a hashmap
+// the key is the level number
+// the value is a tuple of (playerid, block_id, position_of_block)
+#[derive(Resource)]
+pub struct BlockMap {
+    // level num - (playerid, block_id, pos)
+    pub blocks: HashMap<u8, Vec<(u64, i32, Vec2)>>
+}
+
+// a function to spawn the walls that other players control
 fn spawn_multiplayer_walls (
+    // the resource with the positions of the walls
     block_map: Res<BlockMap>,
+
+    // the walls that have already been spawned
     mut walls: Query<(&mut Transform, &MultiplayerWall)>,
+
+    // the level that our player is on
     current_level: Res<CurrentLevel>,
+
     mut commands: Commands,
 ) {
-
+    // if there are any blocks already on this level that need to be spawned or updated
     if let Some(block_vec) = block_map.blocks.get(&current_level.level_number) {
 
+        // makes a vector with tuples of (player_id, block_id, position, boolean)
+        // in regards to the boolean, true means it needs to be spawned
+        // false means it has already been spawned
         let mut vec_bool: Vec<(u64, i32, Vec2, bool)> = block_vec.iter().map(|a| (a.0, a.1, a.2, true)).collect();
 
-
+        // iterating over the walls that have already been spawned
         for (mut transform, multiplayer) in walls.iter_mut() {
-
             for i in &mut vec_bool {
+                // if the wall matches
                 if multiplayer.wall_id == i.1 && multiplayer.client_id == i.0 {
-
+                    // updates position
                     transform.translation.x = i.2.x;
                     transform.translation.y = i.2.y;
+                    // wall has been updated so boolean is set to false
                     i.3 = false;
-
                 }
             }
 
         }
-
+        // loops over and pops the stack
         while let Some((client_id, wall_id, pos, bool)) = vec_bool.pop() {
 
+            // doesn't need to be updated
             if !bool {
                 continue;
             } else {
-
+                // spawns a block with the correct components and in the right position
                 let size = Vec2::new(MAP_SCALE, MAP_SCALE);
-
                 commands
                 .spawn(SpriteBundle {
                     sprite: Sprite {
@@ -133,21 +151,18 @@ fn spawn_multiplayer_walls (
     }
 
 }
-//please
 
-fn multiplayer_walls (
+// a system that sends the current positions of all visible blocks to the server.
+fn send_block_positions (
     walls: Query<(&Transform, &MovableWall)>,
     level: Res<CurrentLevel>,
     mut client: ResMut<RenetClient>,
 ) {
+    // iterates over all of the movable wall entities and sends the level, wall_id and position to the server
     for wall in walls.iter() {
-
         let message = ClientMessageUnreliable::WallPos{ level: level.level_number, wall_id: wall.1.unique_id, pos: wall.0.translation.truncate() };
-
         let input_message = bincode::serialize(&message).unwrap();
-
         client.send_message(DefaultChannel::Unreliable, input_message);
-
     }
 }
 
@@ -182,11 +197,6 @@ fn moving_wall (
 }
 
 
-#[derive(Resource)]
-pub struct BlockMap {
-    // level num - (playerid, block_id, pos)
-    pub blocks: HashMap<u8, Vec<(u64, i32, Vec2)>>
-}
 
 impl BlockMap {
     fn new() -> Self {
