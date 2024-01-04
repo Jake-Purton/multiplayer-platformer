@@ -214,6 +214,7 @@ fn turn_file_into_map (
 }
 
 fn read_and_parse_files (mut cl: u8, maps: &mut ResMut<Maps>, hc: HostClient) {
+    // while there is a file
     while let Ok(mut file) =
         // level_directory() function returns the directory for a specific level number and gamemode
         File::open(level_directory(cl, &hc))
