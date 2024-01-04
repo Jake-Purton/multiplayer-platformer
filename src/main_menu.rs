@@ -132,7 +132,7 @@ pub fn menu_click_system(
                 // to find the position of text: i * size / total_items is the top y value. bottom is top - 60
                 let top = window.height() - (i as f32 * size.size.y / 4.0);
                 let bottom = top - 60.0;
-                
+
                 // if cursor is hovering over that text
                 if position.y < top && position.y > bottom {
                     //turn the text white
@@ -140,6 +140,7 @@ pub fn menu_click_system(
 
                     // if the user clicks on the text
                     if buttons.just_pressed(MouseButton::Left) {
+                        
                         // match the menu's action
                         match section.value.trim() {
                             PLAY => {

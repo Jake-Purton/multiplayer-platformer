@@ -96,6 +96,8 @@ pub fn rapier_player_movement(
                 println!("velocity: {}, movement: {} ", player.velocity, movement);
             }
         } else {
+            // If grappling hook exists
+
             // get the position of the grappling hook
             let (_, hook_transform) = grappling_hook.single();
             // the direction of the hook as a vec2 

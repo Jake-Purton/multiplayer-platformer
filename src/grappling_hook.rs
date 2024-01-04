@@ -107,20 +107,6 @@ fn hook_sensor(
                 commands.entity(entity).remove::<MovingGrappleHook>();
             }
         }
-
-        // for (wall, wall_transform) in platforms.iter() {
-
-        //     if collide(
-        //         hook_transform.translation,
-        //         hook.size,
-        //         wall_transform.translation,
-        //         wall.size
-        //     ).is_some() {
-
-        //         commands.entity(entity).remove::<MovingGrappleHook>();
-
-        //     }
-        // }
     }
 }
 
