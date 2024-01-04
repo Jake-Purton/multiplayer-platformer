@@ -144,27 +144,11 @@ pub fn menu_click_system(
                         // match the menu's action
                         match section.value.trim() {
                             PLAY => {
-                                // current level
-                                let mut cl = 1;
+
                                 // for debugging
                                 println!("play");
                                 // while there are contiguous numbered map files
-                                while let Ok(mut file) =
-                                    // level_directory() function returns the directory for a specific level number and gamemode
-                                    File::open(level_directory(cl, &HostClient::Play))
-                                {
-                                    // read the contents of the file 
-                                    let mut contents = String::new();
-                                    file.read_to_string(&mut contents).unwrap();
-
-                                    // turn the string into a map
-                                    let map = turn_file_into_map (contents);
-
-                                    // insert the map to the maps resource to be used
-                                    maps.maps.insert(cl, map);
-                                    println!("map {cl}");
-                                    cl += 1;
-                                }
+                                read_and_parse_files(1, &mut maps, HostClient::Play);
 
                                 // sets the gamestate to gameplay
                                 game_state.set(GameState::Gameplay)
@@ -187,22 +171,7 @@ pub fn menu_click_system(
                                 // commands.insert_resource(new_renet_server(local_ip));
 
                                 // does the same as the singleplayer button but uses the levels in another directiory to let the player change which ones they are playing with
-                                let mut cl = 1;
-
-                                while let Ok(mut file) =
-                                    File::open(level_directory(cl, &HostClient::Host))
-                                {
-                                    let mut contents = String::new();
-                                    file.read_to_string(&mut contents).unwrap();
-
-                                    let map = turn_file_into_map (contents);
-
-                                    maps.maps.insert(cl, map);
-
-                                    println!("{:?}", maps.maps.keys());
-
-                                    cl += 1;
-                                }
+                                read_and_parse_files(1, &mut maps, HostClient::Host);
 
                                 game_state.set(GameState::Gameplay);
                             }
@@ -242,4 +211,23 @@ fn turn_file_into_map (
     map.reverse();
 
     map
+}
+
+fn read_and_parse_files (mut cl: u8, maps: &mut ResMut<Maps>, hc: HostClient) {
+    while let Ok(mut file) =
+        // level_directory() function returns the directory for a specific level number and gamemode
+        File::open(level_directory(cl, &hc))
+    {
+        // read the contents of the file 
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).unwrap();
+
+        // turn the string into a map
+        let map = turn_file_into_map (contents);
+
+        // insert the map to the maps resource to be used
+        maps.maps.insert(cl, map);
+        println!("map {cl}");
+        cl += 1;
+    }
 }
