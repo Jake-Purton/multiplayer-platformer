@@ -18,7 +18,6 @@ mod win;
 
 use bevy::prelude::*;
 // use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use bevy_kira_audio::prelude::*;
 use bevy_rapier2d::prelude::*;
 use client::MyClientPlugin;
 use death::DeathPlugin;
@@ -70,7 +69,6 @@ fn main() {
         .add_plugin(GrapplePlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(PlatformPlugin)
-        .add_plugin(AudioPlugin)
         .add_plugin(DeathPlugin)
         .add_plugin(StartupPlugin)
         .add_plugin(NextLevelPlugin)

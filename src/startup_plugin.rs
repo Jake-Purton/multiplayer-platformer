@@ -4,7 +4,6 @@ use crate::{
     GameState, BACKGROUND_COLOUR, GRAVITY_CONSTANT,
 };
 use bevy::{prelude::*, window::PrimaryWindow};
-use bevy_kira_audio::{prelude::*, Audio};
 use bevy_rapier2d::prelude::{RapierConfiguration, RigidBody, Velocity};
 
 #[derive(Resource)]
@@ -50,15 +49,13 @@ impl Plugin for StartupPlugin {
                     .in_set(OnUpdate(GameState::Gameplay)),
             )
             .add_system(spinny_cube.in_set(OnUpdate(GameState::Gameplay)))
-            .add_system(despawn_everything.in_schedule(OnExit(GameState::Gameplay)))
-            .add_system(toggle_mute);
+            .add_system(despawn_everything.in_schedule(OnExit(GameState::Gameplay)));
     }
 }
 
 fn pre_startup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    audio: Res<Audio>,
     mut rapier_config: ResMut<RapierConfiguration>,
 ) {
     commands.insert_resource(GameTextures {
@@ -76,10 +73,6 @@ fn pre_startup(
         online: asset_server.load("death-messages/online.png"),
     });
 
-    let music = asset_server.load("music/new_bossa.wav");
-    audio.play(music).looped().with_volume(0.2);
-    audio.pause();
-
     rapier_config.gravity = GRAVITY_CONSTANT;
 }
 
@@ -93,16 +86,6 @@ fn setup(mut commands: Commands) {
             ..Default::default()
         })
         .insert(RigidBody::Dynamic);
-}
-
-fn toggle_mute(audio: Res<Audio>, keys: Res<Input<KeyCode>>) {
-    if keys.just_pressed(KeyCode::M) {
-        if audio.is_playing_sound() {
-            audio.pause();
-        } else {
-            audio.resume();
-        }
-    }
 }
 
 fn camera_follow_player(
