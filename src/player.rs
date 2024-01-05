@@ -102,7 +102,9 @@ pub fn rapier_player_movement(
             let (_, hook_transform) = grappling_hook.single();
             // the direction of the hook as a vec2 
             let mut direction =
-                (hook_transform.translation - player_transform.translation).truncate() /*truncate removes the z part (vec3 -> vec2)*/;
+                (hook_transform.translation - player_transform.translation).truncate();
+                /*truncate removes the z part (vec3 -> vec2)*/
+
             // resolve the forces to get the velocity and movement for the player
             let resolved = resolve_forces(direction, movement);
             let resolved_velocity = resolve_forces(direction, player.velocity);

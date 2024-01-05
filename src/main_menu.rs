@@ -165,12 +165,9 @@ pub fn menu_click_system(
                                 commands.insert_resource(new_renet_client(0, public_ip));
                                 commands.insert_resource(new_renet_server(public_ip));
 
-                                // local ip
-                                // let local_ip = local_ip().unwrap();
-                                // commands.insert_resource(new_renet_client(0, local_ip));
-                                // commands.insert_resource(new_renet_server(local_ip));
-
-                                // does the same as the singleplayer button but uses the levels in another directiory to let the player change which ones they are playing with
+                                // does the same as the singleplayer button but uses the levels
+                                // in another directiory to let the player change which ones 
+                                // they are playing with
                                 read_and_parse_files(1, &mut maps, HostClient::Host);
 
                                 game_state.set(GameState::Gameplay);
