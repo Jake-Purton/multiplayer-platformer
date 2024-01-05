@@ -122,13 +122,10 @@ pub fn menu_click_system(
 
     // if cursor is in the window
     if let Some(position) = window.cursor_position() {
-
         // get the items and the size, there is only one of these so i could have used single_mut()
         for (mut items, size) in menu_items.iter_mut() {
-
             // iterate over the sections of texy
             for (i, section) in items.sections.iter_mut().enumerate() {
-
                 // to find the position of text: i * size / total_items is the top y value. bottom is top - 60
                 let top = window.height() - (i as f32 * size.size.y / 4.0);
                 let bottom = top - 60.0;
@@ -140,11 +137,9 @@ pub fn menu_click_system(
 
                     // if the user clicks on the text
                     if buttons.just_pressed(MouseButton::Left) {
-                        
                         // match the menu's action
                         match section.value.trim() {
                             PLAY => {
-
                                 // for debugging
                                 println!("play");
                                 // while there are contiguous numbered map files
@@ -166,7 +161,7 @@ pub fn menu_click_system(
                                 commands.insert_resource(new_renet_server(public_ip));
 
                                 // does the same as the singleplayer button but uses the levels
-                                // in another directiory to let the player change which ones 
+                                // in another directiory to let the player change which ones
                                 // they are playing with
                                 read_and_parse_files(1, &mut maps, HostClient::Host);
 
@@ -191,9 +186,7 @@ pub fn menu_click_system(
     }
 }
 
-fn turn_file_into_map (
-    contents: String,
-) -> Vec<Vec<u8>> {
+fn turn_file_into_map(contents: String) -> Vec<Vec<u8>> {
     let mut map: Vec<Vec<u8>> = Vec::new();
 
     // iterate over it and parse it to a map
@@ -210,18 +203,18 @@ fn turn_file_into_map (
     map
 }
 
-fn read_and_parse_files (mut cl: u8, maps: &mut ResMut<Maps>, hc: HostClient) {
+fn read_and_parse_files(mut cl: u8, maps: &mut ResMut<Maps>, hc: HostClient) {
     // while there is a file
     while let Ok(mut file) =
         // level_directory() function returns the directory for a specific level number and gamemode
         File::open(level_directory(cl, &hc))
     {
-        // read the contents of the file 
+        // read the contents of the file
         let mut contents = String::new();
         file.read_to_string(&mut contents).unwrap();
 
         // turn the string into a map
-        let map = turn_file_into_map (contents);
+        let map = turn_file_into_map(contents);
 
         // insert the map to the maps resource to be used
         maps.maps.insert(cl, map);

@@ -152,7 +152,7 @@ fn client_update_system(
                 println!("server just sent me a map even though im gaming rn")
             }
 
-            // When the client recieves a message from the server with the wall position, 
+            // When the client recieves a message from the server with the wall position,
             // it adds it to the hashmap
             ServerMessageUnreliable::WallPos {
                 level,

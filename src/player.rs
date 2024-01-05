@@ -71,7 +71,7 @@ pub fn rapier_player_movement(
             movement += Vec2::new(-player.run_speed, 0.0);
         }
         if !output.grounded {
-            // accellerate downwards if in the air 
+            // accellerate downwards if in the air
             player.velocity += GRAVITY_CONSTANT * delta_s;
         } else {
             // if player is on the floor, x velocity is set to 0 (friction)
@@ -100,10 +100,10 @@ pub fn rapier_player_movement(
 
             // get the position of the grappling hook
             let (_, hook_transform) = grappling_hook.single();
-            // the direction of the hook as a vec2 
+            // the direction of the hook as a vec2
             let mut direction =
                 (hook_transform.translation - player_transform.translation).truncate();
-                /*truncate removes the z part (vec3 -> vec2)*/
+            /*truncate removes the z part (vec3 -> vec2)*/
 
             // resolve the forces to get the velocity and movement for the player
             let resolved = resolve_forces(direction, movement);

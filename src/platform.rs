@@ -174,16 +174,21 @@ fn platform_from_map_system(
 
     for (y, array) in map.iter().enumerate() {
         for (x, val) in array.iter().enumerate() {
-
             let x = (x as f32 * MAP_SCALE) - map[0].len() as f32 * MAP_SCALE / 2.0;
             let y = (y as f32 * MAP_SCALE) - map.len() as f32 * MAP_SCALE / 2.0;
 
             if *val == 1 {
                 // spawn a normal wall
-                create_wall!( commands, x, y, Vec2::new(MAP_SCALE, MAP_SCALE) )
+                create_wall!(commands, x, y, Vec2::new(MAP_SCALE, MAP_SCALE))
             } else if *val == 2 {
                 // spawn a movable wall
-                create_movable_wall!( commands, x, y, Vec2::new(MAP_SCALE, MAP_SCALE), current_level.level_number )
+                create_movable_wall!(
+                    commands,
+                    x,
+                    y,
+                    Vec2::new(MAP_SCALE, MAP_SCALE),
+                    current_level.level_number
+                )
             } else if *val == 3 {
                 // SPAWN A PLAYER
                 commands

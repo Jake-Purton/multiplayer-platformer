@@ -62,7 +62,6 @@ pub enum GameState {
 pub struct MultiplayerSetting(HostClient);
 
 fn main() {
-    
     App::new()
         .add_state::<GameState>()
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
