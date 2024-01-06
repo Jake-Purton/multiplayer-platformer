@@ -29,8 +29,15 @@ impl Plugin for MyClientPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(RenetClientPlugin::default())
             .insert_resource(UserIdMap(HashMap::new()))
+            // add the client system to run when in client mode
             .add_system(
                 client_update_system
+                    .in_set(OnUpdate(GameState::Gameplay))
+                    .run_if(run_if_client),
+            )
+            // add the update player system to run when in client mode
+            .add_system(
+                update_players
                     .in_set(OnUpdate(GameState::Gameplay))
                     .run_if(run_if_client),
             )
@@ -49,8 +56,8 @@ pub struct AnotherPlayer {
 
 #[derive(Resource)]
 // a hashmap where the key is the userid, and the value is a tuple of the
-// player's position and the level that player is on
-pub struct UserIdMap(pub HashMap<u64, (Vec3, u8)>);
+// player's position, the level that player is on and wether it needs to be spawned
+pub struct UserIdMap(pub HashMap<u64, (Vec3, u8, bool)>);
 
 pub const PROTOCOL_ID: u64 = 6;
 
@@ -103,11 +110,7 @@ fn client_send_input(
 
 fn client_update_system(
     mut client: ResMut<RenetClient>,
-    game_textures: Res<GameTextures>,
-    mut map: ResMut<UserIdMap>,
-    mut commands: Commands,
-    mut players: Query<(Entity, &AnotherPlayer, &mut Transform)>,
-    current_level: Res<CurrentLevel>,
+    mut player_map: ResMut<UserIdMap>,
     mut block_map: ResMut<BlockMap>,
 ) {
     // iterate over every message 
@@ -115,43 +118,19 @@ fn client_update_system(
         let server_message: ServerMessageUnreliable = bincode::deserialize(&message).unwrap();
 
         match server_message {
+            // player position
             ServerMessageUnreliable::PlayerPosition {
                 id,
                 position: pos,
                 level,
             } => {
-                // if its in this level
-                if level == current_level.level_number {
-                    let exists_in_map = map.0.insert(id, (pos, level)).is_some();
-
-                    // if the player doesnt exist
-                    if !exists_in_map {
-                        // spawn the entity and label it a
-                        commands
-                            .spawn(SpriteBundle {
-                                texture: game_textures.rand_player(&id),
-                                sprite: Sprite {
-                                    custom_size: Some(FELLA_SPRITE_SIZE),
-                                    ..Default::default()
-                                },
-                                transform: Transform::from_translation(pos),
-                                ..Default::default()
-                            })
-                            .insert(Collider::cuboid(
-                                FELLA_SPRITE_SIZE.x / 2.0,
-                                FELLA_SPRITE_SIZE.y / 2.0,
-                            ))
-                            .insert(RigidBody::Fixed)
-                            .insert(AnotherPlayer { id });
-                    }
+                // update the positions and level numbers if it exists
+                if let Some((position, level_number, _)) = player_map.0.get_mut(&id) {
+                    *position = pos;
+                    *level_number = level;
                 } else {
-                    // if the player exists update its position
-                    let exists_in_map = map.0.insert(id, (pos, level)).is_some();
-
-                    // if it wasn't in the map beforehand, remove it
-                    if !exists_in_map {
-                        map.0.remove(&id);
-                    }
+                    // insert the information - pos - level - has not been spawned yet
+                    player_map.0.insert(id, (pos, level, false));
                 }
             }
             ServerMessageUnreliable::Map { map: _, number: _ } => {
@@ -193,16 +172,67 @@ fn client_update_system(
             }
         }
     }
+}
 
-    for (entity, playerid, mut transform) in players.iter_mut() {
-        if let Some((pos, level)) = map.0.get(&playerid.id) {
-            if *level == current_level.level_number {
-                transform.translation = *pos;
-            } else {
-                commands.entity(entity).despawn();
-                map.0.remove(&playerid.id);
-                println!("here, {:?}", map.0);
-            }
-        };
+fn update_players (
+    mut player_map: ResMut<UserIdMap>,
+    gt: Res<GameTextures>,
+    cl: Res<CurrentLevel>,
+    mut commands: Commands,
+    mut players: Query<(Entity, &AnotherPlayer, &mut Transform)>,
+) {
+
+    // iterate over all the spawned players
+    for (entity, ap, mut transform) in players.iter_mut() {
+
+        // get the info sent by the server
+        let player_info = player_map.0.get_mut(&ap.id).unwrap();
+
+        // if the player is on the same level as the client
+        if player_info.1 == cl.level_number {
+            // update its position
+            transform.translation = player_info.0;
+        } else {
+            // despawn it
+            commands.entity(entity).despawn();
+            // it has no longer been spawned so set this to false
+            player_info.2 = false;
+        }
+
     }
+
+    for (id, value) in player_map.0.iter_mut() {
+        // iterate over only the ones which havent been spawned
+        if value.2 {
+            continue;
+        }
+        // ignore players on different levels
+        if value.1 != cl.level_number {
+            continue;
+        }
+        // if the player is on this level and hasn't been spawned yet
+        // spawn the player
+        commands
+            .spawn(SpriteBundle {
+                texture: gt.rand_player(&id),
+                sprite: Sprite {
+                    custom_size: Some(FELLA_SPRITE_SIZE),
+                    ..Default::default()
+                },
+                transform: Transform::from_translation(value.0),
+                ..Default::default()
+            })
+            .insert(Collider::cuboid(
+                FELLA_SPRITE_SIZE.x / 2.0,
+                FELLA_SPRITE_SIZE.y / 2.0,
+            ))
+            .insert(RigidBody::Fixed)
+            .insert(AnotherPlayer { id: *id });
+
+        // it has now been spawned so set this to true
+        value.2 = true;
+
+    }
+
+
 }
