@@ -184,10 +184,8 @@ fn update_players (
 
     // iterate over all the spawned players
     for (entity, ap, mut transform) in players.iter_mut() {
-
         // get the info sent by the server
         let player_info = player_map.0.get_mut(&ap.id).unwrap();
-
         // if the player is on the same level as the client
         if player_info.1 == cl.level_number {
             // update its position
@@ -198,7 +196,6 @@ fn update_players (
             // it has no longer been spawned so set this to false
             player_info.2 = false;
         }
-
     }
 
     for (id, value) in player_map.0.iter_mut() {
@@ -231,8 +228,5 @@ fn update_players (
 
         // it has now been spawned so set this to true
         value.2 = true;
-
     }
-
-
 }
