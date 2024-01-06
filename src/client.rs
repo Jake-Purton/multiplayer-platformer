@@ -28,7 +28,6 @@ pub struct MyClientPlugin;
 impl Plugin for MyClientPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(RenetClientPlugin::default())
-            // .init_resource::<ClientMessages>()
             .insert_resource(UserIdMap(HashMap::new()))
             .add_system(
                 client_update_system
@@ -49,46 +48,48 @@ pub struct AnotherPlayer {
 }
 
 #[derive(Resource)]
+// a hashmap where the key is the userid, and the value is a tuple of the
+// player's position and the level that player is on
 pub struct UserIdMap(pub HashMap<u64, (Vec3, u8)>);
 
 pub const PROTOCOL_ID: u64 = 6;
 
 pub fn new_renet_client(number: u16, ip: IpAddr) -> RenetClient {
+    // the ip and port of the server
     let server_addr = SocketAddr::new(ip, SERVER_PORT);
+    // the ip and port of the client
     let client_addr = SocketAddr::new("0.0.0.0".parse().unwrap(), CLIENT_PORT + number);
-
+    // if the socket is valid
     if let Ok(socket) = UdpSocket::bind(client_addr) {
         let connection_config = RenetConnectionConfig::default();
         let current_time = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap();
+        // generate a unique client id
         let client_id = current_time.as_millis() as u64;
+        // my server doesn't use authentication
         let authentication = ClientAuthentication::Unsecure {
             client_id,
             protocol_id: PROTOCOL_ID,
             server_addr,
             user_data: None,
         };
-
+        // generates the new client and returns it
         RenetClient::new(current_time, socket, connection_config, authentication).unwrap()
     } else {
+        // recursively increases the number as the port may already be being used
+        // this can occur if there are multiple instances of the game running at once
         new_renet_client(number + 1, ip)
     }
 }
 
+
+// send the player's position and the level they are in to the server
 fn client_send_input(
-    // client_messages: Res<ClientMessages>,
     mut client: ResMut<RenetClient>,
     player_position: Query<&Transform, With<Player>>,
     level: Res<CurrentLevel>,
 ) {
-    // for message in &client_messages.messages {
-
-    //     let input_message = bincode::serialize(&message).unwrap();
-
-    //     client.send_message(DefaultChannel::Unreliable, input_message);
-    // }
-
     for pos in player_position.iter() {
         let message = ClientMessageUnreliable::PlayerPosition {
             pos: pos.translation,
@@ -109,6 +110,7 @@ fn client_update_system(
     current_level: Res<CurrentLevel>,
     mut block_map: ResMut<BlockMap>,
 ) {
+    // iterate over every message 
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
         let server_message: ServerMessageUnreliable = bincode::deserialize(&message).unwrap();
 
@@ -118,9 +120,11 @@ fn client_update_system(
                 position: pos,
                 level,
             } => {
+                // if its in this level
                 if level == current_level.level_number {
                     let exists_in_map = map.0.insert(id, (pos, level)).is_some();
 
+                    // if the player doesnt exist
                     if !exists_in_map {
                         // spawn the entity and label it a
                         commands
@@ -141,8 +145,10 @@ fn client_update_system(
                             .insert(AnotherPlayer { id });
                     }
                 } else {
+                    // if the player exists update its position
                     let exists_in_map = map.0.insert(id, (pos, level)).is_some();
 
+                    // if it wasn't in the map beforehand, remove it
                     if !exists_in_map {
                         map.0.remove(&id);
                     }

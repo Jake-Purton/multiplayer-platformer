@@ -118,8 +118,12 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
                 ClientMessageReliable::DebugMessage(string) => {
                     println!("server recieved message: {}", string)
                 }
+                
                 ClientMessageReliable::Ping => {
+                    // if a ping is recieved
                     println!("ping recieved from {}", client_id);
+
+                    // send a pong 
                     let message = ServerMessageReliable::Pong;
                     server.send_message(
                         client_id,
@@ -127,6 +131,7 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
                         bincode::serialize(&message).unwrap(),
                     );
 
+                    // send the number of maps
                     let message = ServerMessageReliable::NumberOfMaps(maps.maps.len() as u16);
                     server.send_message(
                         client_id,
@@ -134,6 +139,7 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
                         bincode::serialize(&message).unwrap(),
                     );
 
+                    // send the maps to the client
                     for (i, a) in &maps.maps {
                         let message = ServerMessageUnreliable::Map {
                             map: a.clone(),

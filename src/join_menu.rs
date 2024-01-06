@@ -122,26 +122,41 @@ fn text_input(mut char_evr: EventReader<ReceivedCharacter>, mut ip_string: ResMu
 
 fn join_input_ip(
     mut commands: Commands,
+
+    // the user's input (the ip they typed)
     ip: Res<IPString>,
+
     mut game_state: ResMut<NextState<GameState>>,
+
+    // keyboard input
     keys: Res<Input<KeyCode>>,
 ) {
+    // if they press enter
     if keys.just_pressed(KeyCode::Return) {
+        // connect to the ip the user input
         let client = renet_client(ip.0.trim());
-
+        
         match client {
+            // ip is ok
             Ok(client) => {
+                // insert the client resource
                 commands.insert_resource(client);
+                // change the setting to client
                 commands.insert_resource(MultiplayerSetting(HostClient::Client));
+                // go to the next state
                 game_state.set(GameState::CheckingConnection);
             }
+            // there is an error
             Err(a) => match a {
                 BindError::Client => println!("client error"),
                 BindError::Server => println!("server error"),
                 BindError::Format => println!("format error"),
             },
         }
+    
+    // escape goes back to the menu
     } else if keys.just_pressed(KeyCode::Escape) {
+        // reset everything
         println!("escape pressed");
         game_state.set(GameState::Menu);
         commands.insert_resource(MultiplayerSetting(HostClient::Play));

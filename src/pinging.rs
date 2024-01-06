@@ -79,26 +79,30 @@ fn pinging_text(
     mut commands: Commands,
     ping_thing: Res<PingThing>,
 ) {
+    // the time since the ping was sent
     let time = SystemTime::now().duration_since(time.time).unwrap();
-
     let mut pinging = "".to_string();
-
     match ping_thing.0 {
+        // if still waiting for the ping
         PingStage::Pinging => {
             pinging.push_str("Pinging");
 
+            // ping timeout
             if time.as_millis() >= TIMEOUT_DURATION {
                 println!("Ping timed out, returning to menu");
+                // resets to menu
                 game_state.set(GameState::Menu);
                 commands.insert_resource(MultiplayerSetting(HostClient::Play));
                 commands.remove_resource::<RenetClient>();
             }
         }
+        // if waiting for the maps
         PingStage::RequestingMaps => {
             pinging.push_str("Getting maps");
 
-            // adds 20 seconds to the timer
+            // adds 20 seconds to the timeout duration (takes longer to timeout)
             if time.as_millis() >= TIMEOUT_DURATION + 20000 {
+                // if it timed out return to the menu
                 println!("Ping timed out, returning to menu");
                 game_state.set(GameState::Menu);
                 commands.insert_resource(MultiplayerSetting(HostClient::Play));
@@ -106,9 +110,12 @@ fn pinging_text(
             }
         }
     }
-
+    // adds dots with this effect in a loop:
+    // pinging
+    // pinging.
+    // pinging..
+    // pinging...
     let dots = time.as_millis() / 300 % 4;
-
     for mut text in &mut text {
         for _ in 0..dots {
             pinging.push('.')
@@ -125,10 +132,12 @@ fn listen_for_pong(
     mut game_state: ResMut<NextState<GameState>>,
     mut maps: ResMut<Maps>,
 ) {
+    // recieve all messages
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message: ServerMessageReliable = bincode::deserialize(&message).unwrap();
 
         match server_message {
+            // if its a pong
             ServerMessageReliable::Pong => {
                 let ping = SystemTime::now().duration_since(ping_time.time).unwrap();
                 println!("ping time: {}ms", ping.as_millis());
@@ -136,9 +145,11 @@ fn listen_for_pong(
                 println!("setting pingthing to request maps");
                 commands.insert_resource(PingThing(PingStage::RequestingMaps))
             }
+            // for debugging
             ServerMessageReliable::DebugMessage(string) => {
                 println!("recieved debug message (pinging.rs) {}", string)
             }
+            // the number of maps so we know we have them all
             ServerMessageReliable::NumberOfMaps(total) => num_maps.0 = Some(total),
             _ => (),
         }
