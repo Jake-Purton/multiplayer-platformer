@@ -15,9 +15,9 @@ mod player;
 mod server;
 mod startup_plugin;
 mod win;
+mod run_if;
 
 use bevy::prelude::*;
-// use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 use client::MyClientPlugin;
 use death::DeathPlugin;
@@ -34,6 +34,7 @@ use win::WinPlugin;
 
 use crate::{join_menu::JoinMenuPlugin, pinging::PingPlugin};
 
+// constants
 const SPRITE_SCALE: f32 = FRAC_1_SQRT_2;
 const HOOK_SPRITE_SIZE: Vec2 = Vec2::new(24.0, 24.0);
 const HOOK_SPEED: f32 = 2000.0;
@@ -45,6 +46,7 @@ const PLAYER_RUN_SPEED: f32 = 300.0;
 const MAP_SCALE: f32 = 80.0;
 const BACKGROUND_COLOUR: Color = Color::rgb(1.0, 0.5, 0.0);
 
+// label the states
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum GameState {
     #[default]
@@ -62,10 +64,18 @@ pub struct MultiplayerSetting(HostClient);
 
 fn main() {
     App::new()
+        // add the states
         .add_state::<GameState>()
+
+        // add physics plugin and bevy default plugins
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
         .add_plugins(DefaultPlugins)
+
+        // insert the default settings
+        .insert_resource(MultiplayerSetting(HostClient::Play))
         .insert_resource(CurrentLevel { level_number: 1 })
+        
+        // add all my custom plugins
         .add_plugin(GrapplePlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(PlatformPlugin)
@@ -79,12 +89,13 @@ fn main() {
         .add_plugin(MyServerPlugin)
         .add_plugin(JoinMenuPlugin)
         .add_plugin(PingPlugin)
-        .insert_resource(MultiplayerSetting(HostClient::Play))
-        // .add_plugin(WorldInspectorPlugin::new())
-        // .add_plugin(RapierDebugRenderPlugin::default())
+        
+
+        // run the app
         .run();
 }
 
+// the resource that tells us what level we are on
 #[derive(Resource)]
 pub struct CurrentLevel {
     level_number: u8,

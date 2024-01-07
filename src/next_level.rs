@@ -1,11 +1,12 @@
 use bevy::prelude::*;
 
 use crate::{
-    client::UserIdMap, main_menu::HostClient, platform::Maps, CurrentLevel, GameState,
-    MultiplayerSetting,
+    platform::Maps, CurrentLevel, GameState,
 };
 
 #[derive(Resource)]
+// doesn't go to the next level instantly
+// but waits for the timer
 pub struct LevelTimer {
     timer: Timer,
 }
@@ -15,31 +16,13 @@ pub struct NextLevelPlugin;
 impl Plugin for NextLevelPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(next_level_system.in_schedule(OnEnter(GameState::NextLevel)))
-            .add_system(
-                delete_hashmap
-                    .in_schedule(OnEnter(GameState::NextLevel))
-                    .run_if(run_if_online),
-            )
             .add_system(back_to_gameplay.in_set(OnUpdate(GameState::NextLevel)));
     }
 }
 
-pub fn run_if_online(host: Res<MultiplayerSetting>) -> bool {
-    !matches!(host.0, HostClient::Play)
-}
-
-// pub fn run_if_not_online(host: Res<MultiplayerSetting>) -> bool {
-//     matches!(host.0, HostClient::Play)
-// }
-
-pub fn delete_hashmap(mut map: ResMut<UserIdMap>) {
-    for i in map.0.clone().keys() {
-        map.0.remove(i);
-        println!("{}", i)
-    }
-}
-
 fn next_level_system(mut commands: Commands) {
+    // setup the background
+    // start the timer
     commands.insert_resource(LevelTimer {
         timer: Timer::from_seconds(0.5, TimerMode::Once),
     });
@@ -56,19 +39,26 @@ fn back_to_gameplay(
     current_level: Res<CurrentLevel>,
     maps: Res<Maps>,
 ) {
+    // tick the timer
     timer.timer.tick(time.delta());
+
+    // change the background colour over time
     let percent = timer.timer.percent_left();
     commands.insert_resource(ClearColor(Color::rgb(7.0, percent, percent)));
 
+    // if the timer finished
     if timer.timer.finished() {
+        // despawn everything
         for entity in entities.iter() {
             commands.entity(entity).despawn()
         }
 
-        // if the level it's trying to access is in the list
+        
         if maps.maps.get(&current_level.level_number).is_none() {
+            // if there are no other levels go to the win screen
             game_state.set(GameState::Win)
         } else {
+            // if there is another level go there
             game_state.set(GameState::Gameplay)
         }
     }

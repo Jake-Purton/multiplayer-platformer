@@ -18,6 +18,7 @@ impl Plugin for MenuPlugin {
         app.add_system(setup_menu.in_schedule(OnEnter(GameState::Menu)))
             .add_system(menu_click_system.in_set(OnUpdate(GameState::Menu)))
             .add_system(despawn_everything.in_schedule(OnExit(GameState::Menu)))
+            // go back to menu from different states
             .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Gameplay)))
             .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Death)))
             .add_system(go_back_to_menu.in_set(OnUpdate(GameState::Win)));
@@ -36,21 +37,27 @@ fn go_back_to_menu(
     mut cl: ResMut<CurrentLevel>,
     mut setting: ResMut<MultiplayerSetting>,
 ) {
+    // if escape was pressed
     if keys.just_pressed(KeyCode::Escape) {
         println!("escape pressed {:?}", game_state.0);
+        // go back to menu
         game_state.set(GameState::Menu);
+        // go bacl to level one
         cl.level_number = 1;
 
         match setting.0 {
             HostClient::Host => {
+                // reset to default
                 setting.0 = HostClient::Play;
                 commands.remove_resource::<RenetClient>();
                 commands.remove_resource::<RenetServer>();
             }
             HostClient::Client => {
+                // reset to default
                 setting.0 = HostClient::Play;
                 commands.remove_resource::<RenetClient>();
             }
+            // already default
             HostClient::Play => (),
         }
     }
@@ -69,7 +76,7 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(ClearColor(BACKGROUND_COLOUR));
     commands.spawn(Camera2dBundle::default());
 
-    // spawns the menu
+    // spawns the menu buttoms
     commands.spawn((
         TextBundle::from_sections([
             TextSection::new(

@@ -39,6 +39,7 @@ impl Plugin for JoinMenuPlugin {
 pub struct IPString(String);
 
 fn setup_join_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // setup the text and camera and background
     commands.insert_resource(ClearColor(BACKGROUND_COLOUR));
     commands.spawn(Camera2dBundle::default());
 
@@ -56,6 +57,7 @@ fn setup_join_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 #[derive(Resource)]
+// puts a cursor bar to indicate that it is a text box
 struct BarTimer {
     timer: Timer,
     b: bool,
@@ -63,12 +65,14 @@ struct BarTimer {
 
 impl BarTimer {
     fn new() -> Self {
+        // every 700 ms the timer finishes
         let timer = Timer::new(Duration::from_millis(700), TimerMode::Repeating);
         Self { timer, b: true }
     }
 
     fn tick(&mut self, dt: Duration) -> bool {
         self.timer.tick(dt);
+        // every time the timer finishes (700ms) b is flipped
         if self.timer.just_finished() {
             self.b = !self.b;
         }
@@ -85,36 +89,43 @@ fn update_text(
 ) {
     for mut text in &mut text {
         let dt = time.delta();
+        // tick the bar timer
         let b = timer.tick(dt);
         let mut a = ip_string.0.clone();
         if b {
+            // if b is true, put a bar at the end.
+            // otherwise; don't.
             a.push('|')
         }
-
+        // update the text to show what you have typed already.
         text.sections[0].value = format!("Server IP: {}", a);
     }
 }
 
 fn text_input(mut char_evr: EventReader<ReceivedCharacter>, mut ip_string: ResMut<IPString>) {
+    // takes input from the keyboard
     for ev in char_evr.iter() {
         let char = ev.char;
 
-        if let Some(a) = ip_string.0.pop() {
-            if a != '|' {
-                ip_string.0.push(a);
-            }
-        }
-
         if char == '\x08' {
+            // if it's a backspace
             ip_string.0.pop();
+            // pop the previous character
         } else if char.is_numeric() {
+            // if it's a number
             ip_string.0.push(char)
+            // add the character to the end
         } else if char == '.' {
+            // if a . was inputted
             if let Some(a) = ip_string.0.pop() {
+                // get the last characyter
                 ip_string.0.push(a);
+                // if the last character was a number
                 if a.is_numeric() {
+                    // push the .
                     ip_string.0.push(char)
                 }
+                // if the last character was not a number don't push the .
             }
         }
     }
@@ -135,7 +146,7 @@ fn join_input_ip(
     if keys.just_pressed(KeyCode::Return) {
         // connect to the ip the user input
         let client = renet_client(ip.0.trim());
-        
+
         match client {
             // ip is ok
             Ok(client) => {
@@ -153,7 +164,7 @@ fn join_input_ip(
                 BindError::Format => println!("format error"),
             },
         }
-    
+
     // escape goes back to the menu
     } else if keys.just_pressed(KeyCode::Escape) {
         // reset everything
@@ -166,18 +177,22 @@ fn join_input_ip(
 
 fn renet_client(ip: &str) -> Result<RenetClient, BindError> {
     let split: Vec<_> = ip.split('.').collect();
+
+    // if there are 4 numbers split up by dots
     if split.len() == 4 {
-        let mut server_addr = ip.parse();
+        // parse it to an ip with the default port for a server
+        let server_addr = format!("{}:{}", ip, SERVER_PORT).parse();
 
-        if !split.contains(&":") {
-            server_addr = format!("{}:{}", ip, SERVER_PORT).parse();
-        }
-
+        // if it parsed properly
         if let Ok(server_addr) = server_addr {
             for i in 0..16 {
-                let client_addr = SocketAddr::new("0.0.0.0".parse().unwrap(), CLIENT_PORT + i);
+                // try up to 16 client ports. (a single machine can have up to 16 clients running)
 
+                // listen to that socket
+                let client_addr = SocketAddr::new("0.0.0.0".parse().unwrap(), CLIENT_PORT + i);
+                // listen to the socket
                 if let Ok(socket) = UdpSocket::bind(client_addr) {
+                    // configure the connection with the currwent time, server address etc.
                     let connection_config = RenetConnectionConfig::default();
                     let current_time = SystemTime::now()
                         .duration_since(SystemTime::UNIX_EPOCH)
@@ -190,6 +205,7 @@ fn renet_client(ip: &str) -> Result<RenetClient, BindError> {
                         user_data: None,
                     };
 
+                    // if it worked return the client structure
                     return Ok(RenetClient::new(
                         current_time,
                         socket,
@@ -199,12 +215,14 @@ fn renet_client(ip: &str) -> Result<RenetClient, BindError> {
                     .unwrap());
                 }
             }
-
+            // if it doesn't work return the corresponding error
             Err(BindError::Client)
         } else {
+            // if it doesn't work return the corresponding error
             Err(BindError::Server)
         }
     } else {
+        // if it doesn't work return the corresponding error
         Err(BindError::Format)
     }
 }

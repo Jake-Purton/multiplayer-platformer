@@ -3,7 +3,7 @@ use bevy_rapier2d::{dynamics::RigidBody, geometry::Collider, prelude::Velocity};
 use bevy_renet::renet::{DefaultChannel, RenetClient};
 
 use crate::{
-    messages::ClientMessageUnreliable, next_level::run_if_online, startup_plugin::PlayerCamera,
+    messages::ClientMessageUnreliable, run_if::run_if_online, startup_plugin::PlayerCamera,
     CurrentLevel, GameState, MAP_SCALE,
 };
 
@@ -22,11 +22,6 @@ impl Plugin for MovingBlockPlugin {
             .insert_resource(BlockMap::new());
     }
 }
-
-// ideas:
-// walls that the block cannot go through but the player can
-// blocks that fall when not being held
-// button
 
 #[derive(Component)]
 pub struct MovableWall {
@@ -53,12 +48,17 @@ fn movable_walls(
     let window = windows.get_single().unwrap();
     let camera = camera.single();
 
+    // get the mouse cursor position
     if let Some(mut position) = window.cursor_position() {
         position.x -= (window.width() / 2.0) - camera.translation.x;
         position.y -= (window.height() / 2.0) - camera.translation.y;
 
+        // if the user clicked the left mouse button
         if mouse.just_pressed(MouseButton::Left) {
+            // iterate over every wall
             for (transform, wall, entity) in walls.iter() {
+
+                // check if the wall intersects the cursor
                 if collide(
                     transform.translation,
                     wall.size,
@@ -67,6 +67,7 @@ fn movable_walls(
                 )
                 .is_some()
                 {
+                    // if it intersects, the wall is moving
                     commands.entity(entity).insert(MovingWall);
                     break;
                 }
@@ -180,13 +181,17 @@ fn moving_wall(
     camera: Query<&Transform, (With<PlayerCamera>, Without<MovingWall>)>,
     mut commands: Commands,
 ) {
+    // if there are moving walls
     if !moving_walls.is_empty() {
+        // if the user is dragging the mouse
         if mouse.pressed(MouseButton::Left) {
             let camera = camera.single();
             let window = windows.get_single().unwrap();
             let pos = window.cursor_position().unwrap();
 
             for (mut vel, _, block_transform) in moving_walls.iter_mut() {
+
+                // move the wall towards the mouse with a velocity
                 let pos = Vec3::new(
                     pos.x - (window.width() / 2.0) + camera.translation.x,
                     pos.y - (window.height() / 2.0) + camera.translation.y,
@@ -196,6 +201,7 @@ fn moving_wall(
                 vel.linvel = (velocity + vel.linvel) * 0.8;
             }
         } else {
+            // if they are not dragging the mouse, wall is no longer moving
             for (_, entity, _) in moving_walls.iter() {
                 commands.entity(entity).remove::<MovingWall>();
             }

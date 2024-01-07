@@ -1,7 +1,4 @@
-use crate::{
-    main_menu::HostClient, moving_block::MovableWall, FELLA_SPRITE_SIZE, PLAYER_JUMP_VELOCITY,
-    PLAYER_RUN_SPEED,
-};
+use crate::{main_menu::HostClient, moving_block::MovableWall, FELLA_SPRITE_SIZE};
 
 use crate::{player::Player, startup_plugin::GameTextures, CurrentLevel, GameState, MAP_SCALE};
 use bevy::{prelude::*, sprite::collide_aabb::collide, utils::HashMap};
@@ -34,6 +31,7 @@ impl Plugin for PlatformPlugin {
     }
 }
 
+// this function returns a level directory based on the setting and the level number
 pub fn level_directory(level_number: u8, hc: &HostClient) -> String {
     match hc {
         HostClient::Client => format!("assets/levels/downloads/level-{}.txt", level_number),
@@ -42,6 +40,7 @@ pub fn level_directory(level_number: u8, hc: &HostClient) -> String {
     }
 }
 
+// macro to create a normal white wall
 macro_rules! create_wall {
     ($commands:expr, $x:expr, $y:expr, $size:expr) => {{
         $commands
@@ -60,6 +59,7 @@ macro_rules! create_wall {
     }};
 }
 
+// macro to create a green goal
 macro_rules! create_level_end {
     ($commands:expr, $x:expr, $y:expr, $size:expr) => {{
         $commands
@@ -86,6 +86,7 @@ macro_rules! create_level_end {
     }};
 }
 
+// macro to create a red killer wall
 macro_rules! create_killer_wall {
     ($commands:expr, $x:expr, $y:expr, $size:expr) => {{
         $commands
@@ -112,13 +113,14 @@ macro_rules! create_killer_wall {
     }};
 }
 
+// create a light blue/green movable wallw
 macro_rules! create_movable_wall {
     ($commands:expr, $x:expr, $y:expr, $size:expr, $level_number:expr) => {{
 
-        // multiply them by different primes to guarantee each block has a unique number, but each block has the same number every time
-        // (if the map is huge, it is possible for 2 blocks to have the same id)
+        // multiply them by different large primes to guarantee each block has 
+        // a unique number, but each block has the same number every time.
+        // movable walls need unique identifiers for multiplayer mode.
         let n1: i32 = ($x as i32 * 1117) + ($y as i32 * 4339) + ($level_number as i32 * 27);
-        println!("{}, {}, {}", n1, $x, $y);
 
         $commands
             .spawn(SpriteBundle {
@@ -145,6 +147,8 @@ macro_rules! create_movable_wall {
     }};
 }
 
+// this resource tells us the lowest point so the player despawns 
+// when it falls off of the map
 #[derive(Resource)]
 pub struct LowestPoint {
     pub point: f32,
@@ -162,20 +166,24 @@ fn platform_from_map_system(
     current_level: Res<CurrentLevel>,
     maps: Res<Maps>,
 ) {
+    // get the map
     let map = maps
         .maps
         .get(&(current_level.level_number))
         .unwrap()
         .clone();
 
+    // get the lowest point on the map
     commands.insert_resource(LowestPoint {
         point: (map.len() as f32 * MAP_SCALE / 2.0) + MAP_SCALE + 100.0,
     });
 
     for (y, array) in map.iter().enumerate() {
         for (x, val) in array.iter().enumerate() {
-            let x = (x as f32 * MAP_SCALE) - map[0].len() as f32 * MAP_SCALE / 2.0;
-            let y = (y as f32 * MAP_SCALE) - map.len() as f32 * MAP_SCALE / 2.0;
+
+            // get the x and y position
+            let x = x as f32 * MAP_SCALE;
+            let y = y as f32 * MAP_SCALE;
 
             if *val == 1 {
                 // spawn a normal wall
@@ -200,12 +208,7 @@ fn platform_from_map_system(
                         },
                         ..Default::default()
                     })
-                    .insert(Player {
-                        run_speed: PLAYER_RUN_SPEED,
-                        velocity: Vec2 { x: 0.0, y: 0.0 },
-                        jump_velocity: PLAYER_JUMP_VELOCITY,
-                        size: FELLA_SPRITE_SIZE,
-                    })
+                    .insert(Player::default())
                     .insert(Collider::cuboid(
                         FELLA_SPRITE_SIZE.x / 2.0,
                         FELLA_SPRITE_SIZE.y / 2.0,
@@ -242,6 +245,7 @@ fn next_level_system(
 ) {
     let (player, player_transform) = player.single();
     for (goal, goal_transform) in goals.iter() {
+        // if the player collides with the goal
         if collide(
             player_transform.translation,
             player.size,
@@ -250,7 +254,9 @@ fn next_level_system(
         )
         .is_some()
         {
+            // increment the level number
             level.level_number += 1;
+            // go to the next level stage
             game_state.set(GameState::NextLevel)
         }
     }

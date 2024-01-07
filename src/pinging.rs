@@ -4,9 +4,6 @@ use bevy::prelude::*;
 
 use bevy_renet::renet::{DefaultChannel, RenetClient};
 
-// how long to wait while pinging (miliseconds)
-const TIMEOUT_DURATION: u128 = 5000;
-
 use crate::{
     main_menu::{HostClient, Menu},
     messages::{ClientMessageReliable, ServerMessageReliable, ServerMessageUnreliable},
@@ -14,6 +11,9 @@ use crate::{
     startup_plugin::despawn_everything,
     GameState, MultiplayerSetting,
 };
+
+// how long to wait while pinging (miliseconds)
+const TIMEOUT_DURATION: u128 = 5000;
 
 #[derive(Resource)]
 struct PingTime {
@@ -36,7 +36,9 @@ pub struct PingPlugin;
 impl Plugin for PingPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.insert_resource(PingThing(PingStage::Pinging))
+            // initialise resource to none
             .insert_resource(NumberOfMaps(None))
+            // add the systems
             .add_system(setup_pinging.in_schedule(OnEnter(GameState::CheckingConnection)))
             .add_system(listen_for_pong.in_set(OnUpdate(GameState::CheckingConnection)))
             .add_system(pinging_text.in_set(OnUpdate(GameState::CheckingConnection)))
@@ -49,16 +51,21 @@ fn setup_pinging(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
+    // a resource to keep track of where we are. pinging or requesting maps
     commands.insert_resource(PingThing(PingStage::Pinging));
     commands.spawn(Camera2dBundle::default());
 
+    // send the ping
     let message = ClientMessageReliable::Ping;
     let message = bincode::serialize(&message).unwrap();
     client.send_message(DefaultChannel::Reliable, message);
+
+    // start the ping timer
     commands.insert_resource(PingTime {
         time: SystemTime::now(),
     });
 
+    // spawn some text that says pinging
     commands.spawn((
         TextBundle::from_section(
             "Pinging",
@@ -155,30 +162,27 @@ fn listen_for_pong(
         }
     }
 
+    // pops messages off the stack until the stack is empty
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
         let server_message: ServerMessageUnreliable = bincode::deserialize(&message).unwrap();
 
-        match server_message {
-            ServerMessageUnreliable::PlayerPosition {
-                id: _,
-                position: _,
-                level: _,
-            } => (),
-            ServerMessageUnreliable::Map { map, number } => {
-                if let Some(num) = num_maps.0 {
-                    println!("Just got sent map number {}", number);
+        // recieve messages from the server
+        if let ServerMessageUnreliable::Map { map, number } = server_message {
+            // read messages containing maps
+            
+            // if we have recieved the message for the total number of maps
+            if let Some(num) = num_maps.0 {
+                // print which map we just recieved
+                println!("Just got sent map number {}", number);
+                // add it to the hashmap of maps
+                maps.maps.insert(number, map);
 
-                    maps.maps.insert(number, map);
-
-                    // make it re-request maps after a while (sent on the unreliable channel)
-
-                    if maps.maps.len() == num as usize {
-                        println!("got all the maps, gaming commences");
-                        game_state.set(GameState::Gameplay);
-                    }
+                // if we have all of the maps go to the gameplay state
+                if maps.maps.len() == num as usize {
+                    println!("got all the maps, going to gameplay");
+                    game_state.set(GameState::Gameplay);
                 }
             }
-            _ => (),
         }
     }
 }

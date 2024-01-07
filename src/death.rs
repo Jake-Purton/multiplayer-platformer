@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
 use crate::{
-    next_level::{delete_hashmap, run_if_online},
     startup_plugin::{despawn_everything, GameTextures},
     GameState, BACKGROUND_COLOUR,
 };
@@ -13,16 +12,12 @@ impl Plugin for DeathPlugin {
         app.add_system(setup_death.in_schedule(OnEnter(GameState::Death)))
             .add_system(restart.in_set(OnUpdate(GameState::Death)))
             .add_system(background.in_set(OnUpdate(GameState::Death)))
-            .add_system(despawn_everything.in_schedule(OnExit(GameState::Death)))
-            .add_system(
-                delete_hashmap
-                    .in_schedule(OnEnter(GameState::Death))
-                    .run_if(run_if_online),
-            );
+            .add_system(despawn_everything.in_schedule(OnExit(GameState::Death)));
     }
 }
 
 fn setup_death(mut commands: Commands, game_textures: Res<GameTextures>) {
+    // setup the menu and text
     commands.insert_resource(ClearColor(BACKGROUND_COLOUR));
     commands.spawn(Camera2dBundle::default());
     commands.spawn(SpriteBundle {
@@ -37,12 +32,14 @@ fn setup_death(mut commands: Commands, game_textures: Res<GameTextures>) {
 }
 
 fn restart(keys: Res<Input<KeyCode>>, mut game_state: ResMut<NextState<GameState>>) {
+    // go back to gameplay when r is pressed
     if keys.just_pressed(KeyCode::R) {
         game_state.set(GameState::Gameplay);
     }
 }
 
 fn background(time: Res<Time>, mut commands: Commands) {
+    // changes the colour of the background over time
     let time = (time.elapsed_seconds() * 2.0).sin() / 8.0;
     commands.insert_resource(ClearColor(BACKGROUND_COLOUR + Color::rgb(time, time, 0.0)));
 }

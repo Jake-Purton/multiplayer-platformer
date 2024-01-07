@@ -15,18 +15,14 @@ use local_ip_address::local_ip;
 
 use crate::{
     client::PROTOCOL_ID,
-    main_menu::HostClient,
     messages::{
         ClientMessageReliable, ClientMessageUnreliable, ServerMessageReliable,
         ServerMessageUnreliable,
     },
-    platform::Maps,
-    MultiplayerSetting,
+    platform::Maps, run_if::run_if_host,
 };
 
-// this version of the server bounces the messages but doesn't send them to itself
-// would also like to send messages when a user disconnects for the player to be despawned.
-
+// the default ports for the client and server
 pub const SERVER_PORT: u16 = 42069;
 pub const CLIENT_PORT: u16 = 5001;
 
@@ -40,50 +36,58 @@ impl Plugin for MyServerPlugin {
     }
 }
 
-fn run_if_host(host: Res<MultiplayerSetting>) -> bool {
-    matches!(host.0, HostClient::Host)
-}
+
 
 pub fn new_renet_server(public_ip: IpAddr) -> RenetServer {
+    // sets up the binding to the public ip address
     let inbound_server_addr = SocketAddr::new(local_ip().unwrap(), SERVER_PORT);
     let socket = UdpSocket::bind(inbound_server_addr).unwrap();
 
-    // Public hosting, requires port forwarding
+    // Public hosting, requires port forwarding on your router
     let server_addr = SocketAddr::new(public_ip, SERVER_PORT);
-
+    // sets up the server
     let connection_config = RenetConnectionConfig::default();
     let server_config =
         ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);
     let current_time = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap();
+    // returns the server
     RenetServer::new(current_time, server_config, connection_config, socket).unwrap()
 }
 
-// If any error is found we just panic
-// ^^ OVERRIDDEN > ;)
 fn panic_on_error_system(mut renet_error: EventReader<RenetError>) {
+    // if there is an error, it crashes and prints the error
+    // this is for development purposes
+    // I have not seen a crash in the final version
     for e in renet_error.iter() {
         panic!("{}", e);
-        // println!("{}", e);
     }
 }
 
 fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
     for client_id in server.clients_id().into_iter() {
         while let Some(message) = server.receive_message(client_id, DefaultChannel::Unreliable) {
+            // recieve all the messages
+
+            // deserialise the messages to be understood (they are sent as bytes and then parsed back to data structures)
             let client_message: ClientMessageUnreliable = bincode::deserialize(&message).unwrap();
 
+            // find out what type of message it is
             match client_message {
                 ClientMessageUnreliable::PlayerPosition { level, pos } => {
+                    // send the position to all clients except the one that told us
                     let message = ServerMessageUnreliable::PlayerPosition {
                         id: client_id,
                         position: pos,
                         level,
                     };
+                    // broadcasts a message to all clients except one
                     server.broadcast_message_except(
+                        // the id of the client rhat doesn't get sent the message
                         client_id,
                         DefaultChannel::Unreliable,
+                        // serialise the message into 1s and 0s
                         bincode::serialize(&message).unwrap(),
                     )
                 }
@@ -96,6 +100,7 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
                     wall_id,
                     pos,
                 } => {
+                    // send the wall positions to all clients except the one that sent it to us
                     let message = ServerMessageUnreliable::WallPos {
                         client_id,
                         pos,
@@ -118,12 +123,12 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
                 ClientMessageReliable::DebugMessage(string) => {
                     println!("server recieved message: {}", string)
                 }
-                
+
                 ClientMessageReliable::Ping => {
                     // if a ping is recieved
                     println!("ping recieved from {}", client_id);
 
-                    // send a pong 
+                    // send a pong
                     let message = ServerMessageReliable::Pong;
                     server.send_message(
                         client_id,
@@ -158,9 +163,11 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
 
     while let Some(event) = server.get_event() {
         match event {
+            // server tells us when a client has connected
             ServerEvent::ClientConnected(client_id, _) => {
                 println!("Client {client_id} connected");
             }
+            // server tells us when a client has disconnected
             ServerEvent::ClientDisconnected(client_id) => {
                 println!("Client {client_id} disconnected: BECAUSE");
                 let message = ServerMessageReliable::PlayerDisconnected { id: client_id };
@@ -171,4 +178,4 @@ fn server_update_system(mut server: ResMut<RenetServer>, maps: Res<Maps>) {
             }
         }
     }
-} // player level change
+}

@@ -6,21 +6,15 @@ use bevy_renet::{
 };
 
 use std::net::{IpAddr, SocketAddr};
-
-// messages that need to be sent:
-// player position and level
-// moving block position / being moved
-
 use std::{collections::HashMap, net::UdpSocket, time::SystemTime};
 
 use crate::{
-    main_menu::HostClient,
     messages::{ClientMessageUnreliable, ServerMessageUnreliable},
     moving_block::BlockMap,
     player::Player,
     server::{CLIENT_PORT, SERVER_PORT},
     startup_plugin::GameTextures,
-    CurrentLevel, GameState, MultiplayerSetting, FELLA_SPRITE_SIZE,
+    CurrentLevel, GameState, FELLA_SPRITE_SIZE, run_if::run_if_client,
 };
 
 pub struct MyClientPlugin;
@@ -41,14 +35,14 @@ impl Plugin for MyClientPlugin {
                     .in_set(OnUpdate(GameState::Gameplay))
                     .run_if(run_if_client),
             )
+            // add the "client_send_input" system when in client mode
             .add_system(client_send_input.run_if(run_if_client));
     }
 }
 
-fn run_if_client(host_or_join: Res<MultiplayerSetting>) -> bool {
-    matches!(host_or_join.0, HostClient::Client | HostClient::Host)
-}
 
+// a component used to describe players
+// that other users are playing as
 #[derive(Component)]
 pub struct AnotherPlayer {
     pub id: u64,
@@ -90,7 +84,6 @@ pub fn new_renet_client(number: u16, ip: IpAddr) -> RenetClient {
     }
 }
 
-
 // send the player's position and the level they are in to the server
 fn client_send_input(
     mut client: ResMut<RenetClient>,
@@ -113,7 +106,7 @@ fn client_update_system(
     mut player_map: ResMut<UserIdMap>,
     mut block_map: ResMut<BlockMap>,
 ) {
-    // iterate over every message 
+    // iterate over every message
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
         let server_message: ServerMessageUnreliable = bincode::deserialize(&message).unwrap();
 
@@ -174,14 +167,13 @@ fn client_update_system(
     }
 }
 
-fn update_players (
+fn update_players(
     mut player_map: ResMut<UserIdMap>,
     gt: Res<GameTextures>,
     cl: Res<CurrentLevel>,
     mut commands: Commands,
     mut players: Query<(Entity, &AnotherPlayer, &mut Transform)>,
 ) {
-
     // iterate over all the spawned players
     for (entity, ap, mut transform) in players.iter_mut() {
         // get the info sent by the server
@@ -211,7 +203,7 @@ fn update_players (
         // spawn the player
         commands
             .spawn(SpriteBundle {
-                texture: gt.rand_player(&id),
+                texture: gt.rand_player(id),
                 sprite: Sprite {
                     custom_size: Some(FELLA_SPRITE_SIZE),
                     ..Default::default()

@@ -3,7 +3,10 @@ use bevy::prelude::*;
 
 use serde::{Deserialize, Serialize};
 
-// message sent from a server
+// These enums are well named so I'm not commenting each individual branch. 
+
+// message sent from a server through the unreliable 
+// channel (faster but it is possible that packets can be lost)
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ServerMessageUnreliable {
     PlayerPosition {
@@ -23,6 +26,8 @@ pub enum ServerMessageUnreliable {
     },
 }
 
+// messages sent from server through the reliable channel
+// slower but dropped packets are re-sent 
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ServerMessageReliable {
     PlayerConnected { id: u64 },
@@ -32,13 +37,14 @@ pub enum ServerMessageReliable {
     Pong,
 }
 
-// message sent from a client
+// message sent from a client through unreliable channel
 #[derive(Debug, Serialize, Deserialize, Component, Resource)]
 pub enum ClientMessageUnreliable {
     PlayerPosition { pos: Vec3, level: u8 },
     WallPos { level: u8, wall_id: i32, pos: Vec2 },
 }
 
+// message sent from a client through the reliable channel
 #[derive(Debug, Serialize, Deserialize, Component, Resource)]
 pub enum ClientMessageReliable {
     DebugMessage(String),
@@ -47,9 +53,3 @@ pub enum ClientMessageReliable {
 
 #[derive(Resource)]
 pub struct IpToJoin(String);
-
-// a resource that can be updated by systems to send messages
-// #[derive(Debug, Default, Serialize, Deserialize, Component, Resource)]
-// pub struct ClientMessages {
-//     pub messages: Vec<ClientMessageUnreliable>
-// }

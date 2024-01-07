@@ -15,6 +15,7 @@ impl Plugin for WinPlugin {
 }
 
 fn setup_win_screen(mut commands: Commands, game_textures: Res<GameTextures>) {
+    // spawns the win screen, background, and camera
     commands.insert_resource(ClearColor(BACKGROUND_COLOUR));
     commands.spawn(Camera2dBundle::default());
     commands.spawn(SpriteBundle {

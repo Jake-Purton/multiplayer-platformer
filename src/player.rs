@@ -7,7 +7,8 @@ use bevy_rapier2d::prelude::{KinematicCharacterController, KinematicCharacterCon
 use crate::{
     grappling_hook::{Hook, MovingGrappleHook},
     platform::{KillerWall, LowestPoint},
-    GameState, GRAPPLE_SPEED, GRAVITY_CONSTANT,
+    GameState, FELLA_SPRITE_SIZE, GRAPPLE_SPEED, GRAVITY_CONSTANT, PLAYER_JUMP_VELOCITY,
+    PLAYER_RUN_SPEED,
 };
 
 pub struct PlayerPlugin;
@@ -26,6 +27,18 @@ pub struct Player {
     pub velocity: Vec2,
     pub jump_velocity: f32,
     pub size: Vec2,
+}
+
+impl Player {
+    // initialises default values for the player
+    pub fn default() -> Self {
+        Player {
+            run_speed: PLAYER_RUN_SPEED,
+            velocity: Vec2::ZERO,
+            jump_velocity: PLAYER_JUMP_VELOCITY,
+            size: FELLA_SPRITE_SIZE,
+        }
+    }
 }
 
 pub fn rapier_player_movement(
@@ -147,6 +160,7 @@ fn player_death_fall_off_the_map(
     lowest_point: Res<LowestPoint>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
+    // if the player falles lower than the lowest point on the map it dies
     let player = player.single();
     if player.translation.y <= -lowest_point.point {
         game_state.set(GameState::Death)
@@ -160,6 +174,7 @@ fn killer_wall(
 ) {
     let player = player.single();
 
+    // if the player intersects with a killer wall it dies
     for wall in walls.iter() {
         if collide(
             wall.1.translation,
