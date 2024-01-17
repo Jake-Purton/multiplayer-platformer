@@ -64,12 +64,6 @@ struct BarTimer {
 }
 
 impl BarTimer {
-    fn new() -> Self {
-        // every 700 ms the timer finishes
-        let timer = Timer::new(Duration::from_millis(700), TimerMode::Repeating);
-        Self { timer, b: true }
-    }
-
     fn tick(&mut self, dt: Duration) -> bool {
         self.timer.tick(dt);
         // every time the timer finishes (700ms) b is flipped
@@ -79,6 +73,12 @@ impl BarTimer {
 
         self.b
     }
+    fn new() -> Self {
+        // every 700 ms the timer finishes
+        let timer = Timer::new(Duration::from_millis(700), TimerMode::Repeating);
+        Self { timer, b: true }
+    }
+
 }
 
 fn update_text(

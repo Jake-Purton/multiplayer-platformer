@@ -126,10 +126,6 @@ fn client_update_system(
                     player_map.0.insert(id, (pos, level, false));
                 }
             }
-            ServerMessageUnreliable::Map { map: _, number: _ } => {
-                println!("server just sent me a map even though im gaming rn")
-            }
-
             // When the client recieves a message from the server with the wall position,
             // it adds it to the hashmap
             ServerMessageUnreliable::WallPos {
@@ -160,9 +156,8 @@ fn client_update_system(
                     let vec = vec![(client_id, wall_id, pos)];
                     block_map.blocks.insert(level, vec);
                 }
-
-                // println!("{:?}", block_map.blocks);
             }
+            _ => (),
         }
     }
 }

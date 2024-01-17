@@ -178,6 +178,8 @@ fn platform_from_map_system(
         point: (map.len() as f32 * MAP_SCALE / 2.0) + MAP_SCALE + 100.0,
     });
 
+    let mut player_spawned = false;
+
     for (y, array) in map.iter().enumerate() {
         for (x, val) in array.iter().enumerate() {
 
@@ -197,7 +199,10 @@ fn platform_from_map_system(
                     Vec2::new(MAP_SCALE, MAP_SCALE),
                     current_level.level_number
                 )
-            } else if *val == 3 {
+            } else if *val == 3 && !player_spawned {
+
+                player_spawned = true;
+
                 // SPAWN A PLAYER
                 commands
                     .spawn(SpriteBundle {

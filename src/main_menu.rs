@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read};
+use std::{fs::File, io::Read, u8};
 
 use bevy::{app::AppExit, prelude::*, window::PrimaryWindow};
 use bevy_renet::renet::{RenetClient, RenetServer};
@@ -196,13 +196,25 @@ pub fn menu_click_system(
 fn turn_file_into_map(contents: String) -> Vec<Vec<u8>> {
     let mut map: Vec<Vec<u8>> = Vec::new();
 
-    // iterate over it and parse it to a map
+    // iterate over each line
     for line in contents.lines() {
-        map.push(
-            line.split_whitespace()
-                .map(|a| a.parse::<u8>().unwrap())
-                .collect(),
-        );
+
+        // the line parsed to integers
+        let mut parsed_line = Vec::new();
+
+        // for each sub-string split by spaces
+        for chars in line.split(" ") {
+
+            // if it can be parsed to an integer add the integer
+            if let Ok(int) = chars.parse::<u8>() {
+                parsed_line.push(int)
+            // otherwise add 0
+            } else {
+                parsed_line.push(0)
+            }
+
+        }
+        map.push(parsed_line);
     }
 
     map.reverse();
